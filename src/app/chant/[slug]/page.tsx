@@ -31,10 +31,10 @@ export default async function ChantPage({ params }: Props) {
   return (
     <article className="space-y-8">
       <header className="text-center space-y-2">
-        <Link href="/library" className="text-xs text-[color:var(--fg-soft)] hover:text-[color:var(--accent)]">
+        <Link href="/library" className="inline-block text-xs text-[color:var(--fg-soft)] hover:text-[color:var(--accent)] py-1">
           ← Library
         </Link>
-        <h1 className="display text-3xl md:text-4xl text-[color:var(--fg)] leading-tight">{chant.title}</h1>
+        <h1 className="display text-2xl sm:text-3xl md:text-4xl text-[color:var(--fg)] leading-tight px-2">{chant.title}</h1>
         {chant.deity && <p className="text-sm text-[color:var(--accent-soft)] uppercase tracking-[0.2em]">{chant.deity}</p>}
         <div className="mala-divider max-w-xs mx-auto pt-3">
           <span>◆</span>

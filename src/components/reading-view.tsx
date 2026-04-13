@@ -18,7 +18,7 @@ const SCRIPT_CLASS: Record<Script, string> = {
   sanskrit: "devanagari",
   hindi: "devanagari",
   tamil: "tamil",
-  transliteration: "italic",
+  transliteration: "italic scripted-translation",
 };
 
 function verseField(v: Verse, s: Script): string | null {
@@ -56,8 +56,8 @@ export function ReadingView({ chant, verses }: { chant: Chant; verses: Verse[] }
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between gap-3 sticky top-[57px] z-20 bg-[color:var(--bg)]/95 backdrop-blur-md py-2 -mx-5 px-5 border-b border-[color:var(--border)]">
-        <div className="flex gap-1 overflow-x-auto">
+      <div className="flex items-center justify-between gap-3 sticky top-[calc(var(--safe-top,0px)+48px)] sm:top-[57px] z-20 bg-[color:var(--bg)]/95 backdrop-blur-md py-2 -mx-4 sm:-mx-6 px-4 sm:px-6 border-b border-[color:var(--border)]">
+        <div className="flex gap-1 overflow-x-auto -mx-1 px-1 snap-x">
           {(["hindi", "tamil", "transliteration"] as Script[]).map((s) => (
             <button
               key={s}
@@ -94,14 +94,14 @@ export function ReadingView({ chant, verses }: { chant: Chant; verses: Verse[] }
               <button
                 type="button"
                 onClick={() => toggle(v.id)}
-                className="w-full text-left p-5 md:p-7 transition-colors hover:bg-[color:var(--cream-dim)]/30"
+                className="w-full text-left p-4 sm:p-6 md:p-7 transition-colors hover:bg-[color:var(--cream-dim)]/30 active:bg-[color:var(--cream-dim)]/50"
                 aria-expanded={isOpen}
               >
                 <div className="flex items-start justify-between gap-4">
                   {v.sanskrit ? (
                     <VerseLines
                       text={v.sanskrit}
-                      className="devanagari text-2xl md:text-3xl text-[color:var(--fg)] leading-[1.8] flex-1"
+                      className="devanagari text-[1.5rem] sm:text-[1.75rem] md:text-[2rem] text-[color:var(--fg)] leading-[1.75] flex-1 break-words"
                     />
                   ) : (
                     <span className="text-sm text-[color:var(--fg-soft)]">(no Sanskrit text)</span>
@@ -125,7 +125,7 @@ export function ReadingView({ chant, verses }: { chant: Chant; verses: Verse[] }
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
                   >
-                    <div className="px-5 md:px-7 pb-6 pt-1 space-y-4 border-t border-[color:var(--border)]">
+                    <div className="px-4 sm:px-6 md:px-7 pb-5 pt-1 space-y-4 border-t border-[color:var(--border)]">
                       {translation && (
                         <div>
                           <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)] mb-1.5">
@@ -169,7 +169,7 @@ export function ReadingView({ chant, verses }: { chant: Chant; verses: Verse[] }
         })}
       </ul>
 
-      <div className="sticky bottom-4 pt-3 flex justify-center">
+      <div className="sticky bottom-[calc(var(--safe-bottom,0px)+68px)] sm:bottom-4 pt-3 flex justify-center">
         <Link
           href={`/counter?mantra=${encodeURIComponent(chant.slug)}`}
           className="inline-flex items-center gap-2 rounded-full bg-[color:var(--maroon)] text-[color:var(--cream)] px-6 py-3 text-sm font-medium shadow-xl shadow-[color:var(--maroon)]/30 hover:-translate-y-0.5 transition-transform"

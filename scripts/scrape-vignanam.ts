@@ -128,6 +128,8 @@ function cleanLine(s: string): string {
     .trim();
 }
 
+const JUNK_RE = /^(browse\s+related|-{3,}|_{3,}|={3,})/i;
+
 function parseVerses(html: string): { title: string; verses: string[] } {
   const $ = cheerio.load(html);
   const rawTitle = $("title").text();
@@ -136,14 +138,17 @@ function parseVerses(html: string): { title: string; verses: string[] } {
   const verses: string[] = [];
   stext.find("p").each((_, p) => {
     const $p = $(p);
-    // Split on <br/> boundaries: replace each with a newline sentinel before reading text
     $p.find("br").replaceWith("\n");
     const raw = $p.text();
     const lines = raw
       .split("\n")
       .map(cleanLine)
       .filter((l) => l.length > 0);
-    if (lines.length > 0) verses.push(lines.join("\n"));
+    if (lines.length === 0) return;
+    const joined = lines.join("\n");
+    // Skip footer junk and separator-only blocks
+    if (JUNK_RE.test(joined) || /^[\-_=•·\s]+$/.test(joined)) return;
+    verses.push(joined);
   });
   return { title, verses };
 }

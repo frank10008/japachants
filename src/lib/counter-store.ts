@@ -17,6 +17,8 @@ type Settings = {
   target: number;
   haptics: boolean;
   defaultScript: "sanskrit" | "hindi" | "tamil" | "transliteration";
+  fontScale: 0.85 | 1 | 1.15 | 1.35 | 1.6;
+  keepAwake: boolean;
 };
 
 type CounterState = {
@@ -38,6 +40,8 @@ const DEFAULT_SETTINGS: Settings = {
   target: 108,
   haptics: true,
   defaultScript: "transliteration",
+  fontScale: 1,
+  keepAwake: false,
 };
 
 function vibrate(ms: number, enabled: boolean) {

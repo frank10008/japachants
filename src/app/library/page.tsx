@@ -19,8 +19,8 @@ export default async function LibraryPage({ searchParams }: Props) {
   return (
     <div className="space-y-8">
       <header>
-        <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--accent-soft)]">the library</p>
-        <h1 className="display text-4xl text-[color:var(--fg)] mt-1">Chants</h1>
+        <p className="text-[10px] sm:text-xs uppercase tracking-[0.25em] text-[color:var(--accent-soft)]">the library</p>
+        <h1 className="display text-3xl sm:text-4xl text-[color:var(--fg)] mt-1">Chants</h1>
         <p className="text-sm text-[color:var(--fg-soft)] mt-2">
           {filtered.length} of {all.length} chants
           {deity ? ` · ${deity}` : ""}

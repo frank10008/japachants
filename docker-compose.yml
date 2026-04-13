@@ -5,22 +5,29 @@ services:
     container_name: japachants
     restart: unless-stopped
     ports:
-      - "3014:3000"
+      - "127.0.0.1:3016:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - HOSTNAME=0.0.0.0
       - JAPA_DB_PATH=/app/db/chants.db
     volumes:
       - japachants_db:/app/db
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.japachants.rule=Host(`japachants.siddha.pro`)"
-      - "traefik.http.routers.japachants.entrypoints=https"
-      - "traefik.http.routers.japachants.tls=true"
-      - "traefik.http.routers.japachants.tls.certresolver=letsencrypt"
-      - "traefik.http.services.japachants.loadbalancer.server.port=3000"
     networks:
       - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.japachants-http.rule=Host(`japachants.siddha.pro`)"
+      - "traefik.http.routers.japachants-http.entrypoints=http"
+      - "traefik.http.routers.japachants-http.middlewares=japachants-redirect"
+      - "traefik.http.middlewares.japachants-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.japachants-redirect.redirectscheme.permanent=true"
+      - "traefik.http.routers.japachants-https.rule=Host(`japachants.siddha.pro`)"
+      - "traefik.http.routers.japachants-https.entrypoints=https"
+      - "traefik.http.routers.japachants-https.tls=true"
+      - "traefik.http.routers.japachants-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.japachants.loadbalancer.server.port=3000"
 
 volumes:
   japachants_db:

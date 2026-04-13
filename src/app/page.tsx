@@ -10,16 +10,16 @@ export default function Home() {
 
   return (
     <div className="space-y-14">
-      <section className="text-center pt-4 md:pt-10">
-        <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--accent-soft)] mb-4">a quiet space for chanting</p>
-        <h1 className="display text-5xl md:text-6xl leading-[1.05] text-[color:var(--fg)]">
+      <section className="text-center pt-2 md:pt-10">
+        <p className="text-[11px] sm:text-sm uppercase tracking-[0.3em] text-[color:var(--accent-soft)] mb-3 sm:mb-4">a quiet space for chanting</p>
+        <h1 className="display text-[2.75rem] sm:text-5xl md:text-6xl leading-[1.05] text-[color:var(--fg)]">
           Japa Chants
         </h1>
-        <p className="mt-5 text-[color:var(--fg-soft)] max-w-xl mx-auto leading-relaxed">
+        <p className="mt-4 sm:mt-5 text-sm sm:text-base text-[color:var(--fg-soft)] max-w-xl mx-auto leading-relaxed px-2">
           Sanskrit stotras, Hindi &amp; Tamil translations, IAST transliteration, and a mala
           counter — all in one place. Installable. Works offline.
         </p>
-        <div className="mt-8 flex gap-3 justify-center">
+        <div className="mt-6 sm:mt-8 flex flex-wrap gap-3 justify-center">
           <Link
             href="/counter"
             className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] text-white px-6 py-3 text-sm font-medium shadow-lg shadow-[color:var(--accent)]/25 hover:shadow-xl hover:-translate-y-0.5 transition-all"

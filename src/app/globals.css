@@ -31,6 +31,11 @@
   --accent-soft: #c9a24a;
   --surface: #fffaee;
   --border: rgba(43, 24, 16, 0.12);
+  --font-scale: 1;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -48,7 +53,12 @@
 
 html, body {
   height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
+
+html { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
 body {
   background: var(--bg);
@@ -66,11 +76,32 @@ body {
   font-family: var(--font-devanagari);
   font-feature-settings: "kern", "liga";
   line-height: 1.7;
+  font-size: calc(1em * var(--font-scale));
 }
 
 .tamil {
   font-family: var(--font-tamil);
   line-height: 1.7;
+  font-size: calc(1em * var(--font-scale));
+}
+
+.scripted-translation {
+  font-size: calc(1em * var(--font-scale));
+}
+
+/* Mobile tap target safety: any interactive thing should be at least 44px tall */
+button, a[role="button"], [data-tap] {
+  min-height: 44px;
+}
+
+/* iOS safe areas */
+.safe-top { padding-top: max(12px, var(--safe-top)); }
+.safe-bottom { padding-bottom: max(12px, var(--safe-bottom)); }
+.safe-x { padding-left: max(20px, var(--safe-left)); padding-right: max(20px, var(--safe-right)); }
+
+/* Landscape tweaks — hide the breathy extra spacing on short viewports */
+@media (max-height: 500px) and (orientation: landscape) {
+  .counter-wrapper { transform: scale(0.9); }
 }
 
 .display {

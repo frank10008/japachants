@@ -96,9 +96,9 @@ export function CounterScreen() {
   const hasCount = count > 0;
 
   return (
-    <div className="relative flex flex-col items-center select-none">
+    <div className="counter-wrapper relative flex flex-col items-center select-none pt-2">
       {/* Mantra header */}
-      <div className="w-full max-w-md mb-4">
+      <div className="w-full max-w-md mb-3 sm:mb-4">
         {currentMantra ? (
           <Link
             href={`/chant/${currentMantra.slug}`}
@@ -117,8 +117,8 @@ export function CounterScreen() {
         )}
       </div>
 
-      {/* Circular counter */}
-      <div className="relative aspect-square w-[min(70vw,360px)] mt-2">
+      {/* Circular counter — mobile-first sizing: 80% of viewport width, capped to screen height too */}
+      <div className="relative aspect-square w-[min(82vw,min(68vh,380px))] mt-1 sm:mt-2">
         <svg viewBox="-150 -150 300 300" className="absolute inset-0 w-full h-full pointer-events-none">
           {Array.from({ length: BEAD_COUNT }).map((_, i) => {
             const angle = (i / BEAD_COUNT) * Math.PI * 2 - Math.PI / 2;
@@ -155,7 +155,7 @@ export function CounterScreen() {
           aria-label="Tap to count. Long press to decrement."
         >
           <div
-            className="text-7xl md:text-8xl font-light tabular-nums"
+            className="text-[22vw] sm:text-7xl md:text-8xl leading-none font-light tabular-nums"
             onClick={(e) => {
               e.stopPropagation();
               onCountDoubleTap();
@@ -169,7 +169,7 @@ export function CounterScreen() {
       </div>
 
       {/* Session stats */}
-      <div className="mt-10 grid grid-cols-3 gap-6 text-center w-full max-w-md">
+      <div className="mt-8 sm:mt-10 grid grid-cols-3 gap-4 sm:gap-6 text-center w-full max-w-md">
         <div>
           <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)]">count</div>
           <div className="display text-2xl text-[color:var(--fg)] tabular-nums">{hydrated ? count : "—"}</div>
@@ -186,12 +186,12 @@ export function CounterScreen() {
         </div>
       </div>
 
-      <div className="mt-8 flex gap-3">
+      <div className="mt-6 sm:mt-8 flex gap-3">
         <button
           type="button"
           onClick={saveSession}
           disabled={!hasCount}
-          className="rounded-full bg-[color:var(--accent)] text-white px-5 py-2 text-sm disabled:opacity-40"
+          className="rounded-full bg-[color:var(--accent)] text-white px-6 py-3 text-sm disabled:opacity-40 min-w-[120px]"
         >
           Save session
         </button>
@@ -199,7 +199,7 @@ export function CounterScreen() {
           type="button"
           onClick={() => setConfirmReset(true)}
           disabled={!hasCount}
-          className="rounded-full border border-[color:var(--border)] text-[color:var(--fg)] px-5 py-2 text-sm disabled:opacity-40"
+          className="rounded-full border border-[color:var(--border)] text-[color:var(--fg)] px-6 py-3 text-sm disabled:opacity-40 min-w-[100px]"
         >
           Reset
         </button>

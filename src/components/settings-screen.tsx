@@ -10,6 +10,13 @@ const SCRIPTS = [
   { value: "tamil", label: "Tamil" },
   { value: "transliteration", label: "Transliteration (IAST)" },
 ] as const;
+const FONT_SCALES = [
+  { value: 0.85, label: "Compact", preview: "text-base" },
+  { value: 1, label: "Default", preview: "text-lg" },
+  { value: 1.15, label: "Large", preview: "text-xl" },
+  { value: 1.35, label: "Larger", preview: "text-2xl" },
+  { value: 1.6, label: "Huge", preview: "text-3xl" },
+] as const;
 
 export function SettingsScreen() {
   const settings = useCounterStore((s) => s.settings);
@@ -51,6 +58,38 @@ export function SettingsScreen() {
               {t}
             </button>
           ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="display text-lg text-[color:var(--fg)]">Chant text size</h2>
+        <p className="text-xs text-[color:var(--fg-soft)] -mt-1">
+          Affects Sanskrit, Hindi, Tamil and transliteration in the reading view.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {FONT_SCALES.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => updateSettings({ fontScale: f.value })}
+              className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                settings.fontScale === f.value
+                  ? "bg-[color:var(--accent)] text-white"
+                  : "bg-[color:var(--surface)] border border-[color:var(--border)]"
+              }`}
+            >
+              <span className="display">अ</span> <span className="ml-1 text-xs">{f.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] p-4 mt-2">
+          <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)] mb-2">preview</div>
+          <div className="devanagari text-2xl text-[color:var(--fg)] leading-relaxed">
+            वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ ।
+          </div>
+          <div className="italic text-base text-[color:var(--fg-soft)] mt-1 scripted-translation">
+            vakratuṇḍa mahākāya sūryakoṭi samaprabha
+          </div>
         </div>
       </section>
 
