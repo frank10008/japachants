@@ -6,15 +6,22 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-## Stage 2: build (runs the scraper against the cache if present, then next build)
+## Stage 2: build
 FROM node:20-alpine AS builder
 RUN apk add --no-cache libc6-compat python3 make g++ sqlite
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# If the repo ships a cache/ folder, the scraper will use it and not hit the network.
-# Otherwise the build will hit vignanam.org. Building with a cold cache takes ~15 minutes.
-RUN mkdir -p cache && npx tsx scripts/scrape-vignanam.ts --limit 220 || (echo "Scraper failed, continuing with whatever was cached" && true)
+# The repo ships a pre-populated db/chants.db (220 chants). To refresh it,
+# re-run `npx tsx scripts/scrape-vignanam.ts --limit 220` locally and commit.
+# If the DB is ever missing (e.g. a fresh clone that deleted it), fall back
+# to scraping inside the build — this hits vignanam.org and takes ~15 min.
+RUN if [ ! -s db/chants.db ]; then \
+      echo "No seed DB found — scraping from scratch"; \
+      mkdir -p cache && npx tsx scripts/scrape-vignanam.ts --limit 220 || echo "scrape failed, continuing"; \
+    else \
+      echo "Using committed seed DB ($(stat -c%s db/chants.db) bytes)"; \
+    fi
 RUN node scripts/generate-icons.mjs
 RUN npx next build
 
