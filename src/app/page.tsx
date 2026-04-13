@@ -1,65 +1,85 @@
-import Image from "next/image";
+import Link from "next/link";
+import { listChants, listDeities } from "@/lib/db";
+
+export const dynamic = "force-static";
 
 export default function Home() {
+  const chants = listChants();
+  const deities = listDeities();
+  const featured = chants.slice(0, 5);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="space-y-14">
+      <section className="text-center pt-4 md:pt-10">
+        <p className="text-sm uppercase tracking-[0.3em] text-[color:var(--accent-soft)] mb-4">a quiet space for chanting</p>
+        <h1 className="display text-5xl md:text-6xl leading-[1.05] text-[color:var(--fg)]">
+          Japa Chants
+        </h1>
+        <p className="mt-5 text-[color:var(--fg-soft)] max-w-xl mx-auto leading-relaxed">
+          Sanskrit stotras, Hindi &amp; Tamil translations, IAST transliteration, and a mala
+          counter — all in one place. Installable. Works offline.
+        </p>
+        <div className="mt-8 flex gap-3 justify-center">
+          <Link
+            href="/counter"
+            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent)] text-white px-6 py-3 text-sm font-medium shadow-lg shadow-[color:var(--accent)]/25 hover:shadow-xl hover:-translate-y-0.5 transition-all"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Begin japa
+          </Link>
+          <Link
+            href="/library"
+            className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border)] px-6 py-3 text-sm text-[color:var(--fg)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] transition-colors"
           >
-            Documentation
-          </a>
+            Browse chants
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {featured.length > 0 && (
+        <section>
+          <div className="flex items-baseline justify-between mb-5">
+            <h2 className="display text-2xl text-[color:var(--fg)]">Featured chants</h2>
+            <Link href="/library" className="text-sm text-[color:var(--fg-soft)] hover:text-[color:var(--accent)]">
+              All {chants.length} →
+            </Link>
+          </div>
+          <ul className="space-y-2">
+            {featured.map((c) => (
+              <li key={c.id}>
+                <Link
+                  href={`/chant/${c.slug}`}
+                  className="group flex items-center justify-between p-4 rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] hover:border-[color:var(--accent)] transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="display text-lg text-[color:var(--fg)] truncate">{c.title}</div>
+                    <div className="text-xs text-[color:var(--fg-soft)] mt-0.5">
+                      {c.deity} · {c.verse_count} {c.verse_count === 1 ? "verse" : "verses"}
+                    </div>
+                  </div>
+                  <span className="ml-4 text-[color:var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {deities.length > 0 && (
+        <section>
+          <h2 className="display text-2xl text-[color:var(--fg)] mb-4">By deity</h2>
+          <div className="flex flex-wrap gap-2">
+            {deities.slice(0, 20).map((d) => (
+              <Link
+                key={d.deity}
+                href={`/library?deity=${encodeURIComponent(d.deity)}`}
+                className="text-sm rounded-full px-3 py-1.5 bg-[color:var(--surface)] border border-[color:var(--border)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)] transition-colors"
+              >
+                {d.deity} <span className="text-[color:var(--fg-soft)] ml-1">{d.count}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

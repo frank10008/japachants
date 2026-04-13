@@ -1,0 +1,30 @@
+services:
+  japachants:
+    build: .
+    image: japachants:latest
+    container_name: japachants
+    restart: unless-stopped
+    ports:
+      - "3014:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JAPA_DB_PATH=/app/db/chants.db
+    volumes:
+      - japachants_db:/app/db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.japachants.rule=Host(`japachants.siddha.pro`)"
+      - "traefik.http.routers.japachants.entrypoints=https"
+      - "traefik.http.routers.japachants.tls=true"
+      - "traefik.http.routers.japachants.tls.certresolver=letsencrypt"
+      - "traefik.http.services.japachants.loadbalancer.server.port=3000"
+    networks:
+      - coolify
+
+volumes:
+  japachants_db:
+
+networks:
+  coolify:
+    external: true

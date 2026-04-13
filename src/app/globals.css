@@ -1,26 +1,112 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-cream: #faf5ec;
+  --color-cream-dim: #f2ead7;
+  --color-saffron: #e87722;
+  --color-saffron-glow: #ff8c3a;
+  --color-maroon: #7a1f1f;
+  --color-maroon-deep: #4a0f0f;
+  --color-gold: #c9a24a;
+  --color-gold-soft: #e3c277;
+  --color-ink: #2b1810;
+  --color-ink-soft: #574033;
+  --color-indigo-deep: #1a1530;
+  --color-indigo-dusk: #261f42;
+
+  --font-devanagari: "Noto Serif Devanagari", "Siddhanta", serif;
+  --font-tamil: "Noto Serif Tamil", serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  --ease-breath: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root {
+  color-scheme: light;
+  --bg: #faf5ec;
+  --fg: #2b1810;
+  --fg-soft: #574033;
+  --accent: #e87722;
+  --accent-soft: #c9a24a;
+  --surface: #fffaee;
+  --border: rgba(43, 24, 16, 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: dark;
+    --bg: #1a1530;
+    --fg: #faf5ec;
+    --fg-soft: #c9a24a;
+    --accent: #e3c277;
+    --accent-soft: #c9a24a;
+    --surface: #261f42;
+    --border: rgba(250, 245, 236, 0.1);
   }
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(232, 119, 34, 0.04) 0%, transparent 60%),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.8' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.17 0 0 0 0 0.09 0 0 0 0 0.06 0 0 0 0.03 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+}
+
+.devanagari {
+  font-family: var(--font-devanagari);
+  font-feature-settings: "kern", "liga";
+  line-height: 1.7;
+}
+
+.tamil {
+  font-family: var(--font-tamil);
+  line-height: 1.7;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.mala-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--accent-soft);
+  opacity: 0.6;
+}
+
+.mala-divider::before,
+.mala-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+}
+
+@keyframes breath {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.04); opacity: 0.92; }
+}
+
+.breath { animation: breath 4.5s var(--ease-breath) infinite; }
+
+button, a { -webkit-tap-highlight-color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

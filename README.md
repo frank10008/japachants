@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Japa Chants
 
-## Getting Started
+A mobile-first PWA that combines a Sanskrit chant library with a japa mala counter.
 
-First, run the development server:
+- **Reading view** — Sanskrit-first, tap to reveal Hindi / Tamil / IAST transliteration
+- **Counter** — 108-bead mala, haptic, long-press decrement, session history
+- **Offline** — installable, works without network once chants are opened
+- **Fast** — SQLite + static generation, no runtime JS for reading
+
+Live at **[japachants.siddha.pro](https://japachants.siddha.pro)**.
+
+## Stack
+
+Next.js 16 (App Router) · TypeScript · Tailwind CSS v4 · better-sqlite3 · Zustand · Framer Motion.
+
+## Development
 
 ```bash
+npm install
+npx tsx scripts/scrape-vignanam.ts --limit 5   # seed a few chants
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scraping
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Texts come from [vignanam.org](https://vignanam.org), a public-domain Vaidika Vignanam project. The scraper reads `sitemap.xml`, caches raw HTML to `cache/{lang}/{slug}.html`, and populates SQLite.
 
-## Learn More
+```bash
+# Five test chants
+npx tsx scripts/scrape-vignanam.ts --only bhaja-govindam-moha-mudagaram,shiva-tandava-stotram
 
-To learn more about Next.js, take a look at the following resources:
+# Full run (220 stotras × 4 scripts, ~15 min on a cold cache)
+npx tsx scripts/scrape-vignanam.ts --limit 220
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Flags: `--limit N`, `--only slug1,slug2,...`, `--fresh` (bypass cache).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+Containerized with a multi-stage Dockerfile; deployed via Coolify on a Hetzner box. DNS points `japachants.siddha.pro` to the server; Traefik labels in `docker-compose.yml` handle HTTPS.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+docker compose build
+docker compose up -d
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The SQLite file lives under `/app/db` (mounted to a named volume so it survives redeploys).
+
+## Credits
+
+- [vignanam.org](https://vignanam.org) — chant texts
+- [greenmesg.org](https://greenmesg.org) — reading layout inspiration
+- [japa108.com](https://japa108.com) — counter design inspiration
+
+All texts are public-domain shastra.

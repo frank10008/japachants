@@ -1,0 +1,26 @@
+{
+  "name": "Japa Chants",
+  "short_name": "Japa",
+  "description": "Sanskrit stotras and a mala counter. Offline-ready.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#faf5ec",
+  "theme_color": "#e87722",
+  "categories": ["lifestyle", "education", "books"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
