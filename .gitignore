@@ -47,3 +47,4 @@ next-env.d.ts
 /db/chants.db
 /db/chants.db-wal
 /db/chants.db-shm
+obsidian-vault/
