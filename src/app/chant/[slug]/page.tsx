@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getChantBySlug, getVerses, listChants, getWordMeaningsForChant } from "@/lib/db";
 import { ReadingView } from "@/components/reading-view";
 import { ChantExternalLinks } from "@/components/chant-external-links";
+import { FavoriteButton } from "@/components/favorite-button";
 
 export const dynamic = "force-static";
 export const dynamicParams = false;
@@ -33,12 +34,15 @@ export default async function ChantPage({ params }: Props) {
   return (
     <article className="space-y-6">
       <header className="text-center space-y-2">
-        <Link
-          href="/library"
-          className="inline-block text-[11px] uppercase tracking-[0.2em] text-[color:var(--fg-soft)] hover:text-[color:var(--accent)] py-1"
-        >
-          ← Library
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/library"
+            className="inline-block text-[11px] uppercase tracking-[0.2em] text-[color:var(--fg-soft)] hover:text-[color:var(--accent)] py-1"
+          >
+            ← Library
+          </Link>
+          <FavoriteButton slug={chant.slug} size="lg" />
+        </div>
         <h1 className="display text-2xl sm:text-3xl md:text-4xl text-[color:var(--fg)] leading-tight px-2">
           {chant.title}
         </h1>

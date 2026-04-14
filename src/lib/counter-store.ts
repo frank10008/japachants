@@ -32,6 +32,7 @@ type CounterState = {
   currentMantra: { slug: string; title: string } | null;
   sessions: Session[];
   settings: Settings;
+  favorites: string[]; // chant slugs
   inc: () => void;
   dec: () => void;
   reset: () => void;
@@ -39,6 +40,7 @@ type CounterState = {
   clearMantra: () => void;
   saveSession: () => void;
   updateSettings: (s: Partial<Settings>) => void;
+  toggleFavorite: (slug: string) => void;
 };
 
 const DEFAULT_SETTINGS: Settings = {
@@ -80,6 +82,30 @@ export const useCounterStore = create<CounterState>()(
       currentMantra: null,
       sessions: [],
       settings: DEFAULT_SETTINGS,
+      favorites: [],
+
+      toggleFavorite: (slug) =>
+        set((s) => {
+          const has = s.favorites.includes(slug);
+          if (has) {
+            // Haptic feedback on unstar
+            if (s.settings.haptics && typeof window !== "undefined") {
+              const n = window.navigator as Navigator & {
+                vibrate?: (p: number | number[]) => boolean;
+              };
+              if (typeof n.vibrate === "function") n.vibrate(10);
+            }
+            return { favorites: s.favorites.filter((x) => x !== slug) };
+          } else {
+            if (s.settings.haptics && typeof window !== "undefined") {
+              const n = window.navigator as Navigator & {
+                vibrate?: (p: number | number[]) => boolean;
+              };
+              if (typeof n.vibrate === "function") n.vibrate([15, 25, 15]);
+            }
+            return { favorites: [...s.favorites, slug] };
+          }
+        }),
 
       inc: () => {
         const s = get();

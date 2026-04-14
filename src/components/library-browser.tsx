@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useRef, useState, useEffect } from "react";
 import type { ChantListEntry } from "@/lib/db";
+import { useCounterStore } from "@/lib/counter-store";
+import { FavoriteButton } from "@/components/favorite-button";
 
 function firstDevanagariChar(title: string): string {
   // quick heuristic for a decorative preview glyph — use first English letter in Devanagari-ish style
@@ -20,6 +22,9 @@ export function LibraryBrowser({
   const [q, setQ] = useState("");
   const [deity, setDeity] = useState<string | null>(null);
   const [onlyWithMeanings, setOnlyWithMeanings] = useState(false);
+  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const favorites = useCounterStore((s) => s.favorites);
+  const favSet = useMemo(() => new Set(favorites), [favorites]);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -33,6 +38,7 @@ export function LibraryBrowser({
 
   const filtered = useMemo(() => {
     let list = chants;
+    if (onlyFavorites) list = list.filter((c) => favSet.has(c.slug));
     if (onlyWithMeanings) list = list.filter((c) => c.meaning_count > 0);
     if (deity) list = list.filter((c) => c.deity === deity);
     const query = q.trim().toLowerCase();
@@ -43,17 +49,18 @@ export function LibraryBrowser({
         return terms.every((t) => hay.includes(t));
       });
     }
-    // Sort chants with meanings first when the filter is off
-    if (!onlyWithMeanings) {
-      list = [...list].sort((a, b) => {
-        const ac = a.meaning_count > 0 ? 1 : 0;
-        const bc = b.meaning_count > 0 ? 1 : 0;
-        if (ac !== bc) return bc - ac;
-        return 0;
-      });
-    }
+    // Sort: favorites first, then chants with meanings, then the rest
+    list = [...list].sort((a, b) => {
+      const af = favSet.has(a.slug) ? 1 : 0;
+      const bf = favSet.has(b.slug) ? 1 : 0;
+      if (af !== bf) return bf - af;
+      const ac = a.meaning_count > 0 ? 1 : 0;
+      const bc = b.meaning_count > 0 ? 1 : 0;
+      if (ac !== bc) return bc - ac;
+      return 0;
+    });
     return list;
-  }, [chants, deity, q, onlyWithMeanings]);
+  }, [chants, deity, q, onlyWithMeanings, onlyFavorites, favSet]);
 
   return (
     <div className="space-y-6">
@@ -96,31 +103,59 @@ export function LibraryBrowser({
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={() => setOnlyWithMeanings((v) => !v)}
-        className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors ${
-          onlyWithMeanings
-            ? "bg-[color:var(--accent-warm)]/15 border border-[color:var(--accent-warm)] text-[color:var(--fg)]"
-            : "bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--fg-soft)]"
-        }`}
-      >
-        <span className="flex items-center gap-2">
-          <span
-            className={`w-4 h-4 rounded-sm border flex items-center justify-center text-[10px] ${
-              onlyWithMeanings
-                ? "bg-[color:var(--accent-warm)] border-[color:var(--accent-warm)] text-white"
-                : "border-[color:var(--border)] bg-transparent"
-            }`}
-          >
-            {onlyWithMeanings ? "✓" : ""}
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setOnlyFavorites((v) => !v)}
+          className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors ${
+            onlyFavorites
+              ? "bg-[color:var(--accent-warm)]/15 border border-[color:var(--accent-warm)] text-[color:var(--fg)]"
+              : "bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--fg-soft)]"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span
+              className={
+                onlyFavorites
+                  ? "text-[color:var(--accent-warm)] text-[18px] leading-none"
+                  : "text-[color:var(--fg-soft)] text-[18px] leading-none opacity-60"
+              }
+            >
+              ★
+            </span>
+            Only my favorites
           </span>
-          Only chants with English meanings
-        </span>
-        <span className="text-[11px] text-[color:var(--fg-soft)] tabular-nums">
-          {withMeaningsCount}
-        </span>
-      </button>
+          <span className="text-[11px] text-[color:var(--fg-soft)] tabular-nums">
+            {favorites.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setOnlyWithMeanings((v) => !v)}
+          className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors ${
+            onlyWithMeanings
+              ? "bg-[color:var(--accent-warm)]/15 border border-[color:var(--accent-warm)] text-[color:var(--fg)]"
+              : "bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--fg-soft)]"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <span
+              className={`w-4 h-4 rounded-sm border flex items-center justify-center text-[10px] ${
+                onlyWithMeanings
+                  ? "bg-[color:var(--accent-warm)] border-[color:var(--accent-warm)] text-white"
+                  : "border-[color:var(--border)] bg-transparent"
+              }`}
+            >
+              {onlyWithMeanings ? "✓" : ""}
+            </span>
+            Only chants with English meanings
+          </span>
+          <span className="text-[11px] text-[color:var(--fg-soft)] tabular-nums">
+            {withMeaningsCount}
+          </span>
+        </button>
+      </div>
 
       <nav
         aria-label="Deity filter"
@@ -180,43 +215,46 @@ export function LibraryBrowser({
             const hasMeanings = c.meaning_count > 0;
             return (
               <li key={c.slug}>
-                <Link
-                  href={`/chant/${c.slug}`}
-                  className="group flex items-center gap-4 p-4 rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] hover:border-[color:var(--accent-warm)] transition-colors"
-                >
-                  <span
-                    aria-hidden
-                    className="display text-2xl text-[color:var(--accent)] shrink-0 w-8 text-center"
+                <div className="group flex items-center gap-2 p-4 pr-2 rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] hover:border-[color:var(--accent-warm)] transition-colors">
+                  <FavoriteButton slug={c.slug} size="md" className="shrink-0" />
+                  <Link
+                    href={`/chant/${c.slug}`}
+                    className="flex items-center gap-4 min-w-0 flex-1"
                   >
-                    {firstDevanagariChar(c.title)}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="display text-base sm:text-lg text-[color:var(--fg)] leading-tight truncate flex-1">
-                        {c.title}
+                    <span
+                      aria-hidden
+                      className="display text-2xl text-[color:var(--accent)] shrink-0 w-8 text-center"
+                    >
+                      {firstDevanagariChar(c.title)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="display text-base sm:text-lg text-[color:var(--fg)] leading-tight truncate flex-1">
+                          {c.title}
+                        </div>
+                        {hasMeanings && (
+                          <span
+                            title={`${c.meaning_count} of ${c.verse_count} verses translated`}
+                            className="shrink-0 rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-[color:var(--accent)]/20 text-[color:var(--accent-warm)] border border-[color:var(--accent)]/40"
+                          >
+                            {coverage >= 1 ? "full" : "en"}
+                          </span>
+                        )}
                       </div>
-                      {hasMeanings && (
-                        <span
-                          title={`${c.meaning_count} of ${c.verse_count} verses translated`}
-                          className="shrink-0 rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-[color:var(--accent)]/20 text-[color:var(--accent-warm)] border border-[color:var(--accent)]/40"
-                        >
-                          {coverage >= 1 ? "full" : "en"}
-                        </span>
-                      )}
+                      <div className="text-[11px] text-[color:var(--fg-soft)] mt-0.5">
+                        {c.deity} · {c.verse_count} {c.verse_count === 1 ? "verse" : "verses"}
+                        {hasMeanings && (
+                          <span className="ml-2 text-[color:var(--accent-warm)]">
+                            {c.meaning_count}/{c.verse_count} translated
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-[11px] text-[color:var(--fg-soft)] mt-0.5">
-                      {c.deity} · {c.verse_count} {c.verse_count === 1 ? "verse" : "verses"}
-                      {hasMeanings && (
-                        <span className="ml-2 text-[color:var(--accent-warm)]">
-                          {c.meaning_count}/{c.verse_count} translated
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-[color:var(--accent-warm)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                    →
-                  </span>
-                </Link>
+                    <span className="text-[color:var(--accent-warm)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0 pr-2">
+                      →
+                    </span>
+                  </Link>
+                </div>
               </li>
             );
           })}
