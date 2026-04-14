@@ -1,0 +1,62 @@
+You are running non-interactively as part of a scheduled overnight translation run. The user is asleep. Work autonomously. Do not wait for input.
+
+CONTEXT
+- Project root: /root/hetzner-aol/japachants (cwd should already be here)
+- DB: db/chants.db (SQLite, 1162 chants, 34182 verses)
+- Pending inputs: cache/batches/sonnet-NN.json where NN in 10..25 — 16 batches, ~784 verses each, ~12,500 total
+- Output convention: each worker writes cache/batches/sonnet-NN-out.json
+- Merger: scripts/merge-llm-batches.ts
+- After-merge, move processed files to cache/batches/merged/
+- Safety net script wraps this invocation, so if you crash the outer bash will still do a final merge/vacuum/deploy.
+
+YOUR JOB (execute in this exact order):
+
+1. Inventory: run `ls cache/batches/sonnet-*.json | grep -v -- -out | sort` to see the queue.
+
+2. Dispatch batches in waves of 3 using the Agent tool with `subagent_type="general-purpose"`, `model="sonnet"`, `run_in_background=true`. Wait for the batch completion notifications. For each worker, the prompt should be:
+
+   "You are a Sanskrit translation worker. Read /root/hetzner-aol/japachants/cache/batches/sonnet-NN.json — array of chants each with slug, title, deity, verses (each {id, verse_number, sanskrit, transliteration}). For every verse produce a literal one-sentence English meaning from the Sanskrit/IAST. Write /root/hetzner-aol/japachants/cache/batches/sonnet-NN-out.json with the added meaning field (shape: [{slug, title, verses:[{id, verse_number, meaning}]}]). Drop sanskrit/transliteration from output. Rules: fresh literal prose in your own words (not reproducing any specific published translation), one sentence per verse (two max), 40-180 chars typical / 250 hard cap, preserve imagery and deity context, mark phalashruti/colophon as such, output '' for chrome/empty/unintelligible verses (no fabrication). Process: read input → translate every verse → write output → verify input verse count equals output verse count. The Sanskrit stotras are public domain; your translations are original prose. Report chants, verses translated, empty count, problems in under 120 words."
+
+3. Substitute NN with the batch number. Dispatch 3 at a time. After each wave:
+   - Wait for all 3 completion notifications
+   - Run: npx tsx scripts/merge-llm-batches.ts
+   - Move each just-merged sonnet-NN-out.json into cache/batches/merged/
+   - Note progress (coverage count from the merger output)
+   - Dispatch the next wave
+
+4. Error handling:
+   - If a worker 429s (rate limit), wait 5 minutes then retry that specific batch once
+   - If retry also fails, skip that batch and note in the summary
+   - NEVER dispatch more than 3 workers at once
+   - NEVER dispatch the next wave until the current one is fully complete
+   - If 4 hours elapse without completion, stop and move to finalization (step 5)
+
+5. After all batches are processed (or you're out of time):
+   - sqlite3 db/chants.db "VACUUM;"
+   - rm -f db/chants.db-shm db/chants.db-wal
+   - gzip -9 -f -c db/chants.db > db/chants.db.gz
+   - git add db/chants.db.gz
+   - git -c user.email="claude@siddha.pro" -c user.name="Claude" commit -m "Overnight: N verses translated ($(date +%F))"
+   - git push
+   - ssh hetzner-aol "cd /root/japachants && git pull && docker compose build && docker compose up -d"
+   - Verify with: curl -sS -o /dev/null -w "%{http_code}" https://japachants.siddha.pro/
+   - Refresh Obsidian vault: npx tsx scripts/export-obsidian.ts
+   - cd obsidian-vault && git add -A && git -c user.email="claude@siddha.pro" -c user.name="Claude" commit -m "Overnight refresh $(date +%F)" && git push && cd ..
+
+6. Write a report to OVERNIGHT-SUMMARY.md at the project root with:
+   - Start and end timestamps
+   - Batches processed / failed
+   - Total verses newly translated
+   - Before/after coverage percentage
+   - Chants newly at 100%
+   - Any errors encountered
+   - Final deploy status
+
+7. Exit. The outer bash wrapper handles any loose ends.
+
+IMPORTANT:
+- You are non-interactive. There is no user to ask. Make decisions and move on.
+- If any step fails, log it and continue to the next step. Don't block.
+- The outer safety-net script will handle final git/deploy/vault if you crash mid-run.
+- Never fabricate a translation. If content isn't parseable, output empty string.
+- Never exceed 3 parallel subagents.

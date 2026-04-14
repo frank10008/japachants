@@ -4,10 +4,22 @@ import { useEffect, useState } from "react";
 import { useCounterStore, hapticsSupported } from "@/lib/counter-store";
 
 const TARGETS = [27, 54, 108, 216, 1008];
-const SCRIPTS = [
-  { value: "hindi", label: "Hindi (Devanagari)" },
-  { value: "tamil", label: "Tamil" },
-  { value: "transliteration", label: "Transliteration (IAST)" },
+const READING_MODES = [
+  {
+    value: "translation",
+    label: "Translation",
+    desc: "Sanskrit + transliteration + English meaning, tap any word for its gloss",
+  },
+  {
+    value: "chanting",
+    label: "Chanting",
+    desc: "Just the script you choose, large and clean — no distractions for recitation",
+  },
+] as const;
+const CHANTING_SCRIPTS = [
+  { value: "sanskrit", label: "Sanskrit", glyph: "संस्कृतम्" },
+  { value: "tamil", label: "Tamil", glyph: "தமிழ்" },
+  { value: "iast", label: "Transliteration (IAST)", glyph: "IAST" },
 ] as const;
 const FONT_SCALES = [
   { value: 0.85, label: "Compact", preview: "text-base" },
@@ -93,20 +105,54 @@ export function SettingsScreen() {
       </section>
 
       <section className="space-y-3">
-        <h2 className="display text-lg text-[color:var(--fg)]">Default translation script</h2>
+        <h2 className="display text-lg text-[color:var(--fg)]">Reading mode</h2>
+        <p className="text-xs text-[color:var(--fg-soft)] -mt-1">
+          Default when you open a chant. You can still flip modes per-chant at the top of each page.
+        </p>
         <div className="flex flex-col gap-2">
-          {SCRIPTS.map((s) => (
+          {READING_MODES.map((m) => (
             <button
-              key={s.value}
+              key={m.value}
               type="button"
-              onClick={() => updateSettings({ defaultScript: s.value })}
+              onClick={() => updateSettings({ readingMode: m.value })}
               className={`text-left rounded-xl px-4 py-3 text-sm transition-colors ${
-                settings.defaultScript === s.value
+                settings.readingMode === m.value
                   ? "bg-[color:var(--accent)]/10 border border-[color:var(--accent)] text-[color:var(--fg)]"
                   : "bg-[color:var(--surface)] border border-[color:var(--border)]"
               }`}
             >
-              {s.label}
+              <div className="font-medium">{m.label}</div>
+              <div className="text-[11px] text-[color:var(--fg-soft)] mt-0.5 leading-snug">
+                {m.desc}
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="display text-lg text-[color:var(--fg)]">Chanting script</h2>
+        <p className="text-xs text-[color:var(--fg-soft)] -mt-1">
+          The script shown when Chanting mode is active.
+        </p>
+        <div className="flex flex-col gap-2">
+          {CHANTING_SCRIPTS.map((s) => (
+            <button
+              key={s.value}
+              type="button"
+              onClick={() => updateSettings({ chantingScript: s.value })}
+              className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors ${
+                settings.chantingScript === s.value
+                  ? "bg-[color:var(--accent)]/10 border border-[color:var(--accent)] text-[color:var(--fg)]"
+                  : "bg-[color:var(--surface)] border border-[color:var(--border)]"
+              }`}
+            >
+              <span className="font-medium">{s.label}</span>
+              <span
+                className={`${s.value === "sanskrit" ? "devanagari" : s.value === "tamil" ? "tamil" : "iast"} text-lg text-[color:var(--fg-soft)]`}
+              >
+                {s.glyph}
+              </span>
             </button>
           ))}
         </div>

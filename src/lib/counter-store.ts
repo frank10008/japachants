@@ -13,12 +13,17 @@ export type Session = {
   duration_seconds: number;
 };
 
+export type ReadingMode = "translation" | "chanting";
+export type ChantingScript = "sanskrit" | "tamil" | "iast";
+
 type Settings = {
   target: number;
   haptics: boolean;
   defaultScript: "sanskrit" | "hindi" | "tamil" | "transliteration";
   fontScale: 0.85 | 1 | 1.15 | 1.35 | 1.6;
   keepAwake: boolean;
+  readingMode: ReadingMode;
+  chantingScript: ChantingScript;
 };
 
 type CounterState = {
@@ -42,6 +47,8 @@ const DEFAULT_SETTINGS: Settings = {
   defaultScript: "transliteration",
   fontScale: 1,
   keepAwake: false,
+  readingMode: "translation",
+  chantingScript: "sanskrit",
 };
 
 function vibrate(pattern: number | number[], enabled: boolean) {
