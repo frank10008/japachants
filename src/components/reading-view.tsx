@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { Chant, Verse, WordEntry } from "@/lib/db";
 import { TappableVerseLine } from "@/components/word-popover";
 import { WordByWordTable } from "@/components/compositional-gloss";
@@ -158,18 +157,6 @@ export function ReadingView({
         })}
       </ul>
 
-      <div className="sticky bottom-[calc(var(--safe-bottom,0px)+68px)] sm:bottom-4 pt-3 flex justify-center">
-        <Link
-          href={`/counter?mantra=${encodeURIComponent(chant.slug)}`}
-          className="inline-flex items-center gap-2 rounded-[3px] text-white px-7 py-3 text-sm font-bold uppercase tracking-wide shadow-[0_10px_18px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-transform"
-          style={{
-            background: "linear-gradient(to right, #ba791a 0%, #cb9418 100%)",
-            minHeight: "54px",
-          }}
-        >
-          Begin japa with this mantra
-        </Link>
-      </div>
     </div>
   );
 }
