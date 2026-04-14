@@ -117,27 +117,54 @@ export function SettingsScreen() {
         <h2 className="display text-lg text-[color:var(--fg)]">Haptics</h2>
         <button
           type="button"
-          onClick={() => updateSettings({ haptics: !settings.haptics })}
-          className="flex items-center justify-between w-full rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] px-4 py-3"
+          onClick={() => {
+            updateSettings({ haptics: !settings.haptics });
+            // Give immediate physical confirmation when enabling
+            if (!settings.haptics && typeof window !== "undefined") {
+              const n = window.navigator as Navigator & {
+                vibrate?: (p: number | number[]) => boolean;
+              };
+              if (typeof n.vibrate === "function") n.vibrate([30, 40, 30]);
+            }
+          }}
+          className="flex items-center justify-between w-full rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] px-4"
+          style={{ minHeight: "56px" }}
         >
-          <span className="text-sm">Vibrate on tap</span>
+          <span className="text-[15px]">Vibrate on tap</span>
           <span
-            className={`w-11 h-6 rounded-full relative transition-colors ${
-              settings.haptics ? "bg-[color:var(--accent-warm)]" : "bg-[color:var(--border)]"
+            className={`relative shrink-0 w-12 h-7 rounded-full transition-colors ${
+              settings.haptics
+                ? "bg-[color:var(--accent-warm)]"
+                : "bg-[color:var(--border)]"
             }`}
           >
             <span
-              className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                settings.haptics ? "translate-x-5" : "translate-x-0.5"
+              className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white shadow transition-[left] duration-200 ${
+                settings.haptics ? "left-[calc(100%-22px)]" : "left-[2px]"
               }`}
             />
           </span>
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              const n = window.navigator as Navigator & {
+                vibrate?: (p: number | number[]) => boolean;
+              };
+              if (typeof n.vibrate === "function") n.vibrate([50, 50, 50, 50, 50]);
+            }
+          }}
+          className="w-full text-left rounded-xl border border-[color:var(--border)] px-4 py-3 text-[13px] text-[color:var(--fg-soft)] hover:border-[color:var(--accent-warm)] transition-colors"
+        >
+          <span className="block font-medium text-[color:var(--fg)]">Test vibration</span>
+          <span className="block mt-0.5">Tap to feel a pattern now.</span>
+        </button>
         {!hapticsSupported() && (
           <p className="text-[11px] text-[color:var(--fg-soft)] italic px-1 leading-relaxed">
-            Your browser doesn&apos;t expose the Vibration API. On iPhone, Safari
-            doesn&apos;t support web-based haptics — the toggle stays on for
-            when you open the app on Android, where it will vibrate.
+            Your browser doesn&apos;t expose the Vibration API. On iPhone Safari
+            web apps cannot trigger haptics — this is an iOS platform limitation.
+            On Android the toggle works.
           </p>
         )}
       </section>
