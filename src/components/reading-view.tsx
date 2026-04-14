@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import type { Chant, Verse, WordEntry } from "@/lib/db";
 import { TappableVerseLine } from "@/components/word-popover";
+import { WordByWordTable } from "@/components/compositional-gloss";
 
 type SecondaryScript = "hindi" | "tamil" | "none";
 
@@ -132,20 +133,24 @@ export function ReadingView({
                   </>
                 )}
 
-                {/* Full verse meaning — always visible, no expand/collapse */}
+                {/* Word-by-word table — always rendered when there are matches */}
                 <div className="mt-5 border-t-2 border-[color:var(--accent)] pt-4">
-                  <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-[color:var(--accent-warm)] mb-2">
-                    meaning
+                  <WordByWordTable sanskrit={v.sanskrit} words={wordMeanings} />
+                  {/* Overall verse meaning */}
+                  <div className="mt-5">
+                    <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-[color:var(--accent-warm)] mb-2">
+                      overall meaning
+                    </div>
+                    {v.meaning ? (
+                      <p className="text-[15px] text-[color:var(--fg)] leading-[1.65]">
+                        {v.meaning}
+                      </p>
+                    ) : (
+                      <p className="text-[13px] italic text-[color:var(--fg-soft)] opacity-70">
+                        Overall English translation not yet available for this verse — the word-by-word breakdown above gives the literal sense.
+                      </p>
+                    )}
                   </div>
-                  {v.meaning ? (
-                    <p className="text-[15px] text-[color:var(--fg)] leading-[1.65]">
-                      {v.meaning}
-                    </p>
-                  ) : (
-                    <p className="text-[13px] italic text-[color:var(--fg-soft)] opacity-70">
-                      English translation not yet available for this verse.
-                    </p>
-                  )}
                 </div>
               </div>
             </li>
