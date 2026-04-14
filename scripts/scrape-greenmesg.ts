@@ -84,60 +84,72 @@ type ParsedWord = {
   breakdown: { devanagari: string; iast: string; meaning: string }[]; // sub-word entries
 };
 
+/**
+ * Parse a single greenmesg dictionary line split by <br/>.
+ * A typical entry looks like:
+ *   word_id__<span class='mword'>DEVA</span> (<span class='trans1'>IAST</span>): GLOSS
+ *     <br/> <span class='mng'>SUB1_DEVA</span> (<span class='trans2'>SUB1_IAST</span>) = SUB1_MEANING
+ *     <br/> <span class='mng'>SUB2_DEVA</span> (<span class='trans2'>SUB2_IAST</span>) = SUB2_MEANING
+ *
+ * Sometimes the gloss or breakdown meanings contain nested `<span class='desc'>(aside)</span>`
+ * or `<span class='kwi'>keyword</span>` which we collapse to plain text.
+ */
 function parseDictLine(line: string): ParsedWord | null {
   const idx = line.indexOf("__");
   if (idx === -1) return null;
   const word_id = line.slice(0, idx).trim();
-  const htmlEntry = decodeEntities(line.slice(idx + 2));
+  const raw = decodeEntities(line.slice(idx + 2));
 
-  const $ = cheerio.load(`<div>${htmlEntry}</div>`, null, false);
-  const $root = $("div").first();
+  // Split on <br/> boundaries so we can parse each chunk cleanly.
+  const chunks = raw.split(/<br\s*\/?>/i).map((c) => c.trim()).filter(Boolean);
+  if (chunks.length === 0) return null;
 
-  const mword = $root.find(".mword").first().text().trim();
-  const trans1 = $root.find(".trans1").first().text().trim();
+  const firstText = (html: string): string => {
+    const $ = cheerio.load(`<div>${html}</div>`, null, false);
+    return $("div").first().text().replace(/\s+/g, " ").trim();
+  };
 
-  // Main gloss: everything between the trans1 close and the first <br/>
-  // Easiest: take the full text, strip the mword/trans1 label prefix
-  const fullText = $root.text();
-  // Format: "{mword} ({trans1}): {gloss}  {mng} ({trans2}) = meaning  ..."
-  // Split on "): " — the gloss is up until the first <br/>
+  // Primary line: `DEVA (IAST): gloss`
+  const first = chunks[0];
+  const $first = cheerio.load(`<div>${first}</div>`, null, false);
+  const $firstRoot = $first("div").first();
+  const mword = $firstRoot.find(".mword").first().text().trim();
+  const trans1 = $firstRoot.find(".trans1").first().text().trim();
+
+  // Gloss: text after "): "
+  const firstFull = $firstRoot.text();
   let gloss = "";
-  const colonIdx = fullText.indexOf("): ");
+  const colonIdx = firstFull.indexOf("): ");
   if (colonIdx !== -1) {
-    // find the next "  " (double space) or the first sub-entry pattern — simpler: take up to the first occurrence of " = " with a preceding span mng
-    const rest = fullText.slice(colonIdx + 3);
-    // Gloss ends where breakdown starts; breakdown entries always have a "=" pattern with the parenthesized trans2
-    const breakdownStartMatch = rest.match(/[\u0900-\u097F]+ \([^)]+\) = /);
-    gloss = breakdownStartMatch ? rest.slice(0, breakdownStartMatch.index).trim() : rest.trim();
-    gloss = gloss.replace(/\s+/g, " ").trim();
+    gloss = firstFull.slice(colonIdx + 3).replace(/\s+/g, " ").trim();
+  } else {
+    // fallback: take everything after the closing paren
+    const parenIdx = firstFull.indexOf(")");
+    if (parenIdx !== -1) gloss = firstFull.slice(parenIdx + 1).replace(/^[:\s]+/, "").trim();
   }
 
+  // Breakdown lines: `DEVA (IAST) = meaning`
   const breakdown: { devanagari: string; iast: string; meaning: string }[] = [];
-  const mngs = $root.find(".mng").toArray();
-  for (const m of mngs) {
-    const $m = $(m);
-    const dev = $m.text().trim();
-    // The .trans2 sibling is the next .trans2 AFTER this .mng
-    let iast = "";
+  for (let i = 1; i < chunks.length; i++) {
+    const $c = cheerio.load(`<div>${chunks[i]}</div>`, null, false);
+    const $root = $c("div").first();
+    const dev = $root.find(".mng").first().text().trim();
+    const iast = $root.find(".trans2").first().text().trim();
+    const fullText = $root.text();
+    // Meaning is whatever comes after the first " = "
     let meaning = "";
-    const next = $m.next();
-    if (next && next.hasClass && next.hasClass("trans2")) {
-      iast = next.text().trim();
-    } else {
-      // walk forward to find next .trans2
-      const sibs = $m.nextAll(".trans2");
-      if (sibs.length) iast = $(sibs[0]).text().trim();
+    const eqIdx = fullText.indexOf(" = ");
+    if (eqIdx !== -1) {
+      meaning = fullText.slice(eqIdx + 3).replace(/\s+/g, " ").trim();
     }
-    // meaning = text after the " = " up to next .mng or end
-    // simpler: parse the text around this node
-    breakdown.push({ devanagari: dev, iast, meaning });
+    if (dev || iast || meaning) breakdown.push({ devanagari: dev, iast, meaning });
   }
 
   return {
     word_id,
     devanagari: mword || "",
     iast: trans1 || "",
-    gloss: gloss || fullText.slice(0, 200).trim(),
+    gloss: gloss || firstText(first).slice(0, 200),
     breakdown,
   };
 }

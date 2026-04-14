@@ -114,29 +114,43 @@ export function TappableVerseLine({ line, words, className }: Props) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 2, scale: 0.98 }}
                   transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-2 w-[min(82vw,20rem)] origin-top rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] shadow-xl text-left p-4"
+                  className="absolute z-40 left-1/2 -translate-x-1/2 top-full mt-1.5 w-max max-w-[min(82vw,22rem)] origin-top rounded-lg bg-[color:var(--surface)] border border-[color:var(--border)] shadow-[0_8px_24px_rgba(30,18,6,0.18)] text-left px-3.5 py-2.5 leading-snug"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <span className="block devanagari text-lg text-[color:var(--fg)]">
-                    {meaning.word_devanagari}
+                  {/* Primary: DEVA (IAST): gloss */}
+                  <span className="block text-[13px] text-[color:var(--fg)]">
+                    <span className="devanagari text-[color:var(--fg)]">{meaning.word_devanagari}</span>
+                    {meaning.word_iast && (
+                      <>
+                        {" "}
+                        <span className="iast text-[color:var(--fg-soft)]">({meaning.word_iast})</span>
+                      </>
+                    )}
+                    {meaning.gloss && (
+                      <>
+                        <span className="text-[color:var(--fg-soft)]">: </span>
+                        <span className="text-[color:var(--accent)]">{meaning.gloss}</span>
+                      </>
+                    )}
                   </span>
-                  {meaning.word_iast && (
-                    <span className="block iast text-sm text-[color:var(--fg-soft)] mt-0.5">
-                      {meaning.word_iast}
-                    </span>
-                  )}
-                  {meaning.gloss && (
-                    <span className="block text-sm text-[color:var(--fg)] leading-snug mt-2">
-                      {meaning.gloss}
-                    </span>
-                  )}
+                  {/* Sub-word breakdown: DEVA (IAST) = meaning */}
                   {meaning.breakdown && meaning.breakdown.length > 0 && (
-                    <span className="block mt-2 pt-2 border-t border-[color:var(--border)]">
+                    <span className="block mt-1">
                       {meaning.breakdown.map((b, i) => (
-                        <span key={i} className="block text-xs text-[color:var(--fg-soft)] leading-snug">
+                        <span key={i} className="block text-[12px] text-[color:var(--fg-soft)]">
                           <span className="devanagari text-[color:var(--fg)]">{b.devanagari}</span>
-                          {b.iast && <span className="iast ml-1 opacity-70">({b.iast})</span>}
-                          {b.meaning && <span className="ml-1">= {b.meaning}</span>}
+                          {b.iast && (
+                            <>
+                              {" "}
+                              <span className="iast">({b.iast})</span>
+                            </>
+                          )}
+                          {b.meaning && (
+                            <>
+                              <span> = </span>
+                              <span className="text-[color:var(--accent)]">{b.meaning}</span>
+                            </>
+                          )}
                         </span>
                       ))}
                     </span>
