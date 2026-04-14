@@ -11,8 +11,6 @@ services:
       - PORT=3000
       - HOSTNAME=0.0.0.0
       - JAPA_DB_PATH=/app/db/chants.db
-    volumes:
-      - japachants_db:/app/db
     networks:
       - coolify
     labels:
@@ -28,9 +26,6 @@ services:
       - "traefik.http.routers.japachants-https.tls=true"
       - "traefik.http.routers.japachants-https.tls.certresolver=letsencrypt"
       - "traefik.http.services.japachants.loadbalancer.server.port=3000"
-
-volumes:
-  japachants_db:
 
 networks:
   coolify:
