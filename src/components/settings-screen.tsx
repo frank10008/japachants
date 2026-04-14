@@ -37,7 +37,7 @@ export function SettingsScreen() {
   return (
     <div className="space-y-10">
       <header>
-        <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--accent-soft)]">settings</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--accent-warm)]">settings</p>
         <h1 className="display text-4xl text-[color:var(--fg)] mt-1">Preferences</h1>
       </header>
 
@@ -83,7 +83,7 @@ export function SettingsScreen() {
           ))}
         </div>
         <div className="rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] p-4 mt-2">
-          <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)] mb-2">preview</div>
+          <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-warm)] mb-2">preview</div>
           <div className="devanagari text-2xl text-[color:var(--fg)] leading-relaxed">
             वक्रतुण्ड महाकाय सूर्यकोटि समप्रभ ।
           </div>
@@ -139,15 +139,15 @@ export function SettingsScreen() {
         <h2 className="display text-lg text-[color:var(--fg)]">All-time practice</h2>
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] py-4">
-            <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)]">sessions</div>
+            <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-warm)]">sessions</div>
             <div className="display text-2xl tabular-nums">{sessions.length}</div>
           </div>
           <div className="rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] py-4">
-            <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)]">mantras</div>
+            <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-warm)]">mantras</div>
             <div className="display text-2xl tabular-nums">{totalCount}</div>
           </div>
           <div className="rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] py-4">
-            <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-soft)]">minutes</div>
+            <div className="text-[10px] uppercase tracking-widest text-[color:var(--accent-warm)]">minutes</div>
             <div className="display text-2xl tabular-nums">{totalMinutes}</div>
           </div>
         </div>

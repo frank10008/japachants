@@ -8,19 +8,21 @@ RUN npm ci
 
 ## Stage 2: build
 FROM node:20-alpine AS builder
-RUN apk add --no-cache libc6-compat python3 make g++ sqlite
+RUN apk add --no-cache libc6-compat python3 make g++ sqlite gzip
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# The repo ships a pre-populated db/chants.db (220 chants). To refresh it,
-# re-run `npx tsx scripts/scrape-vignanam.ts --limit 220` locally and commit.
-# If the DB is ever missing (e.g. a fresh clone that deleted it), fall back
-# to scraping inside the build — this hits vignanam.org and takes ~15 min.
-RUN if [ ! -s db/chants.db ]; then \
-      echo "No seed DB found — scraping from scratch"; \
-      mkdir -p cache && npx tsx scripts/scrape-vignanam.ts --limit 220 || echo "scrape failed, continuing"; \
-    else \
-      echo "Using committed seed DB ($(stat -c%s db/chants.db) bytes)"; \
+# Repo ships the seed DB gzipped (db/chants.db.gz ≈ 18 MB) because the raw
+# SQLite file is over GitHub's 100 MB limit. Decompress on build. If the .gz
+# is missing (rare), fall back to a full scrape — hits vignanam.org and takes
+# ~80 minutes for 1189 chants.
+RUN if [ -f db/chants.db.gz ]; then \
+      echo "Decompressing seed DB ($(stat -c%s db/chants.db.gz) bytes)"; \
+      gunzip -kf db/chants.db.gz; \
+      echo "Decompressed to $(stat -c%s db/chants.db) bytes"; \
+    elif [ ! -s db/chants.db ]; then \
+      echo "No seed DB — scraping from scratch (this takes ~80 minutes)"; \
+      mkdir -p cache && npx tsx scripts/scrape-vignanam.ts || echo "scrape failed, continuing"; \
     fi
 RUN node scripts/generate-icons.mjs
 RUN npx next build

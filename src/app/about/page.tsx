@@ -4,8 +4,8 @@ export default function AboutPage() {
   return (
     <article className="prose-invert space-y-8 max-w-xl mx-auto">
       <header>
-        <p className="text-xs uppercase tracking-[0.25em] text-[color:var(--accent-soft)]">about</p>
-        <h1 className="display text-4xl text-[color:var(--fg)] mt-1">Japa Chants</h1>
+        <p className="text-[10px] uppercase tracking-[0.25em] text-[color:var(--accent-warm)]">about</p>
+        <h1 className="display text-3xl sm:text-4xl text-[color:var(--fg)] mt-1 font-light">Japa Chants</h1>
       </header>
 
       <section className="space-y-3 text-[color:var(--fg-soft)] leading-relaxed">

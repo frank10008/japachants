@@ -56,6 +56,30 @@ const RULES: { match: RegExp; deity: string; category: string }[] = [
   { match: /\b(krishna|keshava|madhava|govinda|gopala|kanha|vasudeva|giridhari|damodara|madhusudan|murari|yashoda)/i,
     deity: "Krishna", category: "Krishna Stotrams" },
   { match: /\b(vishnu|hari|narayana|achyuta)/i, deity: "Vishnu", category: "Vishnu Stotrams" },
+
+  // Broader catch-alls for remaining misc
+  { match: /\b(varahi|aindri|kaumari|maheshwari|narasimhi|brahmani|vaishnavi|chamunda|chinnamasta|bagalamukhi|matangi|kamalatmika|dhumavati|tara|kali|bhairavi|tripurabhairavi|shodashi|shakambari|bhuvaneshwari|annapurna|meenakshi|bala|kamakshi|mookambika)/i,
+    deity: "Devi", category: "Devi Stotrams" },
+  { match: /\b(ardhanari|ardhanaari|ardhanaareeshwar|arunachala|nataraj|pashupati|shambhu|shankar|mahalinga|nilakanth|dakshinamurti|somanath|kaal-bhairav|bhairav|kashi-vishwanath|rudrashtakam|linga|rudra)/i,
+    deity: "Shiva", category: "Shiva Stotrams" },
+  { match: /\b(angaraka|mangala|chandra|budha|shukra|shani|rahu|ketu|bhaskara|graha|nakshatra)/i,
+    deity: "Navagraha", category: "Navagraha Stotrams" },
+  { match: /\b(bruhaspati|brihaspati|guru-graha)/i, deity: "Navagraha", category: "Navagraha Stotrams" },
+  { match: /\b(agni|vayu|indra|varuna|kubera|yama|soma-pavamana|ashvin)/i, deity: "Vedic", category: "Vedic Deities" },
+  { match: /\b(suktam|sukta|upanishad|prashnopanishad|katha|ishaavaasya|isha-vasya|isavasya|taittiriya|brihadaranyaka|chhandogya|shvetashvatara|svetasvatara|kaivalya|aitareya|mandukya|kena|mundaka)/i,
+    deity: "Vedanta", category: "Vedic & Upanishads" },
+  { match: /\b(bhagavad-?gita|chanakya|niti|nyaya|yoga-sutra|patanjali|kularnava|samhita)/i, deity: "Vedanta", category: "Scriptures" },
+  { match: /\b(tiruppavai|thiruppavai|andal|godai|alvar|divya-prabandha|hanuman-chalisa)/i,
+    deity: "Vishnu", category: "Vaishnava Hymns" },
+  { match: /\b(tevaram|thevaram|thiruvasagam|thiruvachagam|appar|sundarar|sambandar|manikkavacakar|nayanmar)/i,
+    deity: "Shiva", category: "Nayanar Compositions" },
+  { match: /\b(sri-sukta|sri-suktam|kanakadhara|lakshmi-suktam|vaibhava-lakshmi|mahalakshmi)/i,
+    deity: "Lakshmi", category: "Lakshmi Stotrams" },
+  { match: /\b(saraswati|sarasvati|sharada|saraswathi)/i, deity: "Saraswati", category: "Saraswati Stotrams" },
+  { match: /\b(bhartruhari|bhartrhari|kalidasa|adi-shankara|madhvacharya|ramanuja)/i,
+    deity: "Scripture", category: "Classical Compositions" },
+  { match: /\b(pancharatra|bhagavata|purana|ramayana)/i, deity: "Vishnu", category: "Epics & Puranas" },
+  { match: /\b(carnatic|geetham|sarali|daatu|swara)/i, deity: "Music", category: "Carnatic Music" },
 ];
 
 function reclassify() {

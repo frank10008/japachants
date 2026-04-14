@@ -1,14 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Cormorant_Garamond, Noto_Serif_Devanagari, Noto_Serif_Tamil } from "next/font/google";
+import { DM_Sans, Cormorant, Noto_Serif_Devanagari, Noto_Serif_Tamil } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import { FontScaleProvider } from "@/components/font-scale-provider";
 import { MobileNav } from "@/components/mobile-nav";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const cormorant = Cormorant_Garamond({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+const cormorant = Cormorant({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
   variable: "--font-cormorant",
   display: "swap",
 });
@@ -40,8 +46,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf5ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#1a1530" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f0e3" },
+    { media: "(prefers-color-scheme: dark)", color: "#120e1f" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -54,7 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${cormorant.variable} ${devanagari.variable} ${tamil.variable} h-full antialiased`}
+      className={`${dmSans.variable} ${cormorant.variable} ${devanagari.variable} ${tamil.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

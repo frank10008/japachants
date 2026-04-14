@@ -42,6 +42,21 @@ export type Verse = {
   meaning: string | null;
 };
 
+export type WordMeaning = {
+  id: number;
+  chant_id: number;
+  word_order: number;
+  word_devanagari: string | null;
+  word_iast: string | null;
+  gloss: string | null;
+  breakdown: { devanagari: string; iast: string; meaning: string }[];
+};
+
+export type ChantLink = {
+  source: string;
+  url: string;
+};
+
 export function listChants(): Chant[] {
   return db().prepare("SELECT * FROM chants ORDER BY deity, title").all() as Chant[];
 }
@@ -54,6 +69,41 @@ export function getVerses(chantId: number): Verse[] {
   return db()
     .prepare("SELECT * FROM verses WHERE chant_id = ? ORDER BY verse_number")
     .all(chantId) as Verse[];
+}
+
+function tableExists(name: string): boolean {
+  try {
+    const r = db()
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")
+      .get(name);
+    return !!r;
+  } catch {
+    return false;
+  }
+}
+
+export function getWordMeanings(chantId: number): WordMeaning[] {
+  if (!tableExists("word_meanings")) return [];
+  const rows = db()
+    .prepare("SELECT id, chant_id, word_order, word_devanagari, word_iast, gloss, breakdown FROM word_meanings WHERE chant_id = ? ORDER BY word_order")
+    .all(chantId) as (Omit<WordMeaning, "breakdown"> & { breakdown: string })[];
+  return rows.map((r) => ({
+    ...r,
+    breakdown: (() => {
+      try {
+        return JSON.parse(r.breakdown || "[]");
+      } catch {
+        return [];
+      }
+    })(),
+  }));
+}
+
+export function getChantLinks(chantId: number): ChantLink[] {
+  if (!tableExists("chant_links")) return [];
+  return db()
+    .prepare("SELECT source, url FROM chant_links WHERE chant_id = ?")
+    .all(chantId) as ChantLink[];
 }
 
 export function listDeities(): { deity: string; count: number }[] {
@@ -75,9 +125,22 @@ export function searchChants(q: string): Chant[] {
       )
       .all(sanitized) as Chant[];
   } catch {
-    // FTS may error on weird input; fall back to LIKE
     return db()
       .prepare("SELECT * FROM chants WHERE title LIKE ? OR deity LIKE ? ORDER BY title LIMIT 100")
       .all(`%${q}%`, `%${q}%`) as Chant[];
   }
+}
+
+/** Lightweight list for client-side live search — everything at once, no verses */
+export type ChantListEntry = {
+  slug: string;
+  title: string;
+  deity: string | null;
+  category: string | null;
+  verse_count: number;
+};
+export function listChantsForClient(): ChantListEntry[] {
+  return db()
+    .prepare("SELECT slug, title, deity, category, verse_count FROM chants ORDER BY deity, title")
+    .all() as ChantListEntry[];
 }

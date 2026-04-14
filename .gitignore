@@ -42,9 +42,8 @@ next-env.d.ts
 
 # japachants
 /cache/
-# db/chants.db committed as seed data
-#/db/chants.db*
 /tmp/
-# but do ignore wal/shm
+# Keep the compressed seed DB (db/chants.db.gz); exclude raw + WAL artifacts.
+/db/chants.db
 /db/chants.db-wal
 /db/chants.db-shm
