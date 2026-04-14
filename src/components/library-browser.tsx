@@ -19,14 +19,21 @@ export function LibraryBrowser({
 }) {
   const [q, setQ] = useState("");
   const [deity, setDeity] = useState<string | null>(null);
+  const [onlyWithMeanings, setOnlyWithMeanings] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  const withMeaningsCount = useMemo(
+    () => chants.filter((c) => c.meaning_count > 0).length,
+    [chants]
+  );
+
   const filtered = useMemo(() => {
     let list = chants;
+    if (onlyWithMeanings) list = list.filter((c) => c.meaning_count > 0);
     if (deity) list = list.filter((c) => c.deity === deity);
     const query = q.trim().toLowerCase();
     if (query) {
@@ -36,8 +43,17 @@ export function LibraryBrowser({
         return terms.every((t) => hay.includes(t));
       });
     }
+    // Sort chants with meanings first when the filter is off
+    if (!onlyWithMeanings) {
+      list = [...list].sort((a, b) => {
+        const ac = a.meaning_count > 0 ? 1 : 0;
+        const bc = b.meaning_count > 0 ? 1 : 0;
+        if (ac !== bc) return bc - ac;
+        return 0;
+      });
+    }
     return list;
-  }, [chants, deity, q]);
+  }, [chants, deity, q, onlyWithMeanings]);
 
   return (
     <div className="space-y-6">
@@ -79,6 +95,32 @@ export function LibraryBrowser({
           </button>
         )}
       </div>
+
+      <button
+        type="button"
+        onClick={() => setOnlyWithMeanings((v) => !v)}
+        className={`w-full flex items-center justify-between rounded-xl px-4 py-3 text-sm transition-colors ${
+          onlyWithMeanings
+            ? "bg-[color:var(--accent-warm)]/15 border border-[color:var(--accent-warm)] text-[color:var(--fg)]"
+            : "bg-[color:var(--surface)] border border-[color:var(--border)] text-[color:var(--fg-soft)]"
+        }`}
+      >
+        <span className="flex items-center gap-2">
+          <span
+            className={`w-4 h-4 rounded-sm border flex items-center justify-center text-[10px] ${
+              onlyWithMeanings
+                ? "bg-[color:var(--accent-warm)] border-[color:var(--accent-warm)] text-white"
+                : "border-[color:var(--border)] bg-transparent"
+            }`}
+          >
+            {onlyWithMeanings ? "✓" : ""}
+          </span>
+          Only chants with English meanings
+        </span>
+        <span className="text-[11px] text-[color:var(--fg-soft)] tabular-nums">
+          {withMeaningsCount}
+        </span>
+      </button>
 
       <nav
         aria-label="Deity filter"
@@ -133,32 +175,51 @@ export function LibraryBrowser({
         </div>
       ) : (
         <ul className="space-y-2">
-          {filtered.slice(0, 500).map((c) => (
-            <li key={c.slug}>
-              <Link
-                href={`/chant/${c.slug}`}
-                className="group flex items-center gap-4 p-4 rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] hover:border-[color:var(--accent)] transition-colors"
-              >
-                <span
-                  aria-hidden
-                  className="display text-2xl text-[color:var(--accent-warm)] opacity-50 shrink-0 w-8 text-center"
+          {filtered.slice(0, 500).map((c) => {
+            const coverage = c.verse_count > 0 ? c.meaning_count / c.verse_count : 0;
+            const hasMeanings = c.meaning_count > 0;
+            return (
+              <li key={c.slug}>
+                <Link
+                  href={`/chant/${c.slug}`}
+                  className="group flex items-center gap-4 p-4 rounded-xl bg-[color:var(--surface)] border border-[color:var(--border)] hover:border-[color:var(--accent-warm)] transition-colors"
                 >
-                  {firstDevanagariChar(c.title)}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="display text-base sm:text-lg text-[color:var(--fg)] leading-tight truncate">
-                    {c.title}
+                  <span
+                    aria-hidden
+                    className="display text-2xl text-[color:var(--accent)] shrink-0 w-8 text-center"
+                  >
+                    {firstDevanagariChar(c.title)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="display text-base sm:text-lg text-[color:var(--fg)] leading-tight truncate flex-1">
+                        {c.title}
+                      </div>
+                      {hasMeanings && (
+                        <span
+                          title={`${c.meaning_count} of ${c.verse_count} verses translated`}
+                          className="shrink-0 rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-[color:var(--accent)]/20 text-[color:var(--accent-warm)] border border-[color:var(--accent)]/40"
+                        >
+                          {coverage >= 1 ? "full" : "en"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-[color:var(--fg-soft)] mt-0.5">
+                      {c.deity} · {c.verse_count} {c.verse_count === 1 ? "verse" : "verses"}
+                      {hasMeanings && (
+                        <span className="ml-2 text-[color:var(--accent-warm)]">
+                          {c.meaning_count}/{c.verse_count} translated
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-[color:var(--fg-soft)] mt-0.5">
-                    {c.deity} · {c.verse_count} {c.verse_count === 1 ? "verse" : "verses"}
-                  </div>
-                </div>
-                <span className="text-[color:var(--accent)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                  →
-                </span>
-              </Link>
-            </li>
-          ))}
+                  <span className="text-[color:var(--accent-warm)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                    →
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       )}
 

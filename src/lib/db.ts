@@ -292,9 +292,18 @@ export type ChantListEntry = {
   deity: string | null;
   category: string | null;
   verse_count: number;
+  meaning_count: number;
 };
 export function listChantsForClient(): ChantListEntry[] {
   return db()
-    .prepare("SELECT slug, title, deity, category, verse_count FROM chants ORDER BY deity, title")
+    .prepare(
+      `SELECT c.slug, c.title, c.deity, c.category, c.verse_count,
+              (SELECT COUNT(*) FROM verses v
+               WHERE v.chant_id = c.id
+                 AND v.meaning IS NOT NULL
+                 AND length(v.meaning) > 0) AS meaning_count
+       FROM chants c
+       ORDER BY c.deity, c.title`
+    )
     .all() as ChantListEntry[];
 }

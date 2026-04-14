@@ -75,44 +75,83 @@ function extractFromHtml(html: string, source: string): ExtractedStotra | null {
   const rawTitle = $("title").text().replace(/\s*-\s*In sanskrit.*$/i, "").trim();
   if (!rawTitle) return null;
 
-  // Find the "Meaning:" block and extract per-verse lnum entries.
-  // Greenmesg templates vary; the safe path is: get the full body text,
-  // find the first "Meaning:" occurrence, then the next "Note:" or "Click" as the end.
+  // Greenmesg page structure (confirmed by inspection of sankata_nashak_ganesh_stotra.html):
+  //
+  //   <Sanskrit verse N>
+  //   Meaning:<br/>
+  //   <span class='lnum'>N.1:</span> English line 1 <br/>
+  //   <span class='lnum'>N.2:</span> English line 2 <br/>
+  //   <br/><img>…
+  //   <span class='Sanskrit'>…verse N+1 Sanskrit…</span>
+  //   Meaning:<br/>
+  //   <span class='lnum'>(N+1).1:</span> …
+  //
+  // So the correct extraction: split the WHOLE body on every lnum label, and
+  // for each text chunk, cut off at the first thing that marks the end of the
+  // English: a next-verse Sanskrit block, an <img>, "Meaning:" label, or
+  // "Note:/Click here" footer.
+
   const body = $("body").html() || "";
-  const meaningMatch = body.match(/Meaning:([\s\S]*?)(?:Note:|Click here|Source:|<script|<\/body|$)/i);
-  if (!meaningMatch) return null;
 
-  const meaningHtml = meaningMatch[1];
-  const $m = cheerio.load(`<div>${meaningHtml}</div>`, null, false);
+  // Split by lnum label spans: chunks = [pre, label1, text1, label2, text2, ...]
+  const chunks = body.split(/<span[^>]*class=['"]lnum['"][^>]*>([^<]+)<\/span>/i);
+  if (chunks.length < 3) return null;
 
-  // Each <span class='lnum'>N:</span> followed by text until the next lnum or end
-  const rawInner = $m("div").html() || "";
-  // Split on lnum markers
-  const chunks = rawInner.split(/<span[^>]*class=['"]lnum['"][^>]*>([^<]+)<\/span>/i);
-  // chunks: [before, label1, text1, label2, text2, ...]
-  const verses: ExtractedVerse[] = [];
+  // Each chunk must be cut at the first boundary marker
+  const BOUNDARY = /<span[^>]*class=['"](?:Sanskrit|SanskritTrans)['"]|<div[^>]*class=['"](?:Sanskrit|SanskritTrans)['"]|<img\b|Meaning:\s*<br|Note:|Click\s+here|<script/i;
+
+  // Aggregate sub-line labels (1.1, 1.2) into a single verse
+  const byVerse = new Map<number, string[]>();
+
   for (let i = 1; i < chunks.length; i += 2) {
-    const label = chunks[i].trim().replace(/:$/, "");
-    const num = parseInt(label, 10);
+    const rawLabel = chunks[i].trim().replace(/:$/, "");
+    // Parse "1" or "1.1" or "1.2" — take the integer part as verse number
+    const num = parseInt(rawLabel, 10);
     if (isNaN(num)) continue;
-    const textHtml = chunks[i + 1] || "";
-    // Strip tags and clean
+
+    let textHtml = chunks[i + 1] || "";
+    // Trim at first boundary marker so we don't leak into the next verse
+    const boundaryMatch = textHtml.match(BOUNDARY);
+    if (boundaryMatch && boundaryMatch.index !== undefined) {
+      textHtml = textHtml.slice(0, boundaryMatch.index);
+    }
+
+    // Strip HTML into plain text
     const $t = cheerio.load(`<div>${textHtml}</div>`, null, false);
     let text = $t("div").text().replace(/\s+/g, " ").trim();
-    // Truncate at next section-break artifacts
-    text = text.replace(/Note:.*$/i, "").replace(/Click here.*$/i, "").trim();
-    if (text.length > 0) {
-      verses.push({ verse_number: num, meaning: text });
-    }
+    // Belt-and-suspenders: strip any Devanagari that might have leaked
+    text = text.replace(/[\u0900-\u097F]+/g, "").replace(/\s+/g, " ").trim();
+    // Strip any trailing separator junk
+    text = text.replace(/^[\s|.,;:]+|[\s|.,;:]+$/g, "");
+    if (text.length < 3) continue;
+    // Drop if it obviously contains scraped chrome
+    if (/^(note|click|source)/i.test(text)) continue;
+
+    const prior = byVerse.get(num) || [];
+    prior.push(text);
+    byVerse.set(num, prior);
   }
 
-  // If no lnum spans found, try a single prose meaning
+  const verses: ExtractedVerse[] = [];
+  for (const [num, parts] of byVerse) {
+    // Join sub-lines with " · " for readability
+    const joined = parts.join(" · ");
+    // Quality gate: reject absurdly long verses (almost certainly corrupt)
+    if (joined.length > 1500) continue;
+    verses.push({ verse_number: num, meaning: joined });
+  }
+
+  // No-lnum fallback: if the page has a single prose Meaning: block, capture
+  // just the first 600 chars as verse 1. Only if we got zero lnum verses.
   if (verses.length === 0) {
-    const $wrap = cheerio.load(`<div>${meaningHtml}</div>`, null, false);
-    let text = $wrap("div").text().replace(/\s+/g, " ").trim();
-    text = text.replace(/Note:.*$/i, "").replace(/Click here.*$/i, "").trim();
-    if (text.length > 8) {
-      verses.push({ verse_number: 1, meaning: text });
+    const meaningMatch = body.match(/Meaning:([\s\S]*?)(?:Note:|Click\s+here|<script)/i);
+    if (meaningMatch) {
+      const $f = cheerio.load(`<div>${meaningMatch[1]}</div>`, null, false);
+      let text = $f("div").text().replace(/\s+/g, " ").trim();
+      text = text.replace(/[\u0900-\u097F]+/g, "").replace(/\s+/g, " ").trim();
+      if (text.length >= 10 && text.length <= 1500) {
+        verses.push({ verse_number: 1, meaning: text });
+      }
     }
   }
 
@@ -185,12 +224,20 @@ function main() {
       const tj = jaccard(parsed.titleTokens, v.titleTokens);
       const tc = containment(parsed.titleTokens, v.titleTokens);
       const score = Math.max(sj, sc * 0.9, tj, tc * 0.85);
-      // Require at least 2 shared slug or title tokens to filter noise
-      let inter = 0;
-      for (const t of parsed.slugTokens) if (v.slugTokens.has(t)) inter++;
-      let interT = 0;
-      for (const t of parsed.titleTokens) if (v.titleTokens.has(t)) interT++;
-      if (inter < 2 && interT < 2) continue;
+
+      let slugInter = 0;
+      for (const t of parsed.slugTokens) if (v.slugTokens.has(t)) slugInter++;
+      let titleInter = 0;
+      for (const t of parsed.titleTokens) if (v.titleTokens.has(t)) titleInter++;
+
+      // Allow single-token matches ONLY when both sides are single-token and identical
+      // (e.g. 'rudrashtakam' <-> 'rudrashtakam'). Otherwise require ≥2 shared tokens.
+      const singleTokenExact =
+        parsed.slugTokens.size === 1 &&
+        v.slugTokens.size === 1 &&
+        slugInter === 1;
+
+      if (!singleTokenExact && slugInter < 2 && titleInter < 2) continue;
       if (score >= 0.45 && (!best || score > best.score)) {
         best = { id: v.id, score, slug: v.slug };
       }
