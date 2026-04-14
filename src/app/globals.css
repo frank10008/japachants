@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+/* Self-hosted Helvetica Neue — same files japa108.com uses */
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/HelveticaNeue.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/HelveticaNeue-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Helvetica Neue";
+  src: url("/fonts/HelveticaNeue-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --color-cream: #f7f0e3;
   --color-cream-dim: #efe4cb;
@@ -16,10 +39,11 @@
 
   --font-devanagari: var(--font-noto-devanagari), "Noto Serif Devanagari", serif;
   --font-tamil: var(--font-noto-tamil), "Noto Serif Tamil", serif;
-  --font-display: var(--font-cormorant), Georgia, serif;
-  --font-iast: var(--font-cormorant), Georgia, serif;
-  --font-body: var(--font-dm-sans), system-ui, sans-serif;
-  --font-counter: var(--font-cormorant), Georgia, serif;
+  /* japa108 uses Helvetica Neue for everything UI — body, headings, counter */
+  --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-iast: Georgia, "Times New Roman", serif; /* japa108 uses Georgia for italics/blockquotes */
+  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-counter: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 :root {
@@ -113,14 +137,16 @@ body {
 .scripted-translation { font-size: calc(1em * var(--font-scale)); }
 .display {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: -0.01em;
+  color: var(--fg-soft);
 }
 .counter-num {
   font-family: var(--font-counter);
-  font-weight: 300;
+  font-weight: 500;
   font-feature-settings: "lnum", "tnum";
   line-height: 0.95;
+  letter-spacing: -0.02em;
 }
 
 .mala-divider {

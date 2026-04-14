@@ -1,23 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Cormorant, Noto_Serif_Devanagari, Noto_Serif_Tamil } from "next/font/google";
+import { Noto_Serif_Devanagari, Noto_Serif_Tamil } from "next/font/google";
 import Link from "next/link";
+import Image from "next/image";
 import "./globals.css";
 import { FontScaleProvider } from "@/components/font-scale-provider";
 import { MobileNav } from "@/components/mobile-nav";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-dm-sans",
-  display: "swap",
-});
-const cormorant = Cormorant({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  style: ["normal", "italic"],
-  variable: "--font-cormorant",
-  display: "swap",
-});
+// Only the script fonts come from Google Fonts. UI text uses self-hosted
+// Helvetica Neue declared via @font-face in globals.css.
 const devanagari = Noto_Serif_Devanagari({
   subsets: ["devanagari", "latin"],
   weight: ["400", "500", "600"],
@@ -60,23 +50,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${cormorant.variable} ${devanagari.variable} ${tamil.variable} h-full antialiased`}
+      className={`${devanagari.variable} ${tamil.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
         <FontScaleProvider />
         <header
-          className="sticky top-0 z-30 backdrop-blur-md bg-[color:var(--bg)]/85 border-b border-[color:var(--border)]"
+          className="sticky top-0 z-30 backdrop-blur-md bg-[color:var(--bg)]/92 border-b border-[color:var(--border)]"
           style={{ paddingTop: "var(--safe-top)" }}
         >
           <nav className="max-w-3xl mx-auto px-4 sm:px-5 py-3 flex items-center justify-between gap-3">
-            <Link href="/" className="display text-lg sm:text-xl tracking-tight text-[color:var(--fg)] shrink-0">
-              <span className="text-[color:var(--accent)]">ॐ</span> Japa
+            <Link href="/" className="shrink-0 flex items-center" aria-label="Japa Chants — home">
+              <Image
+                src="/japa108/logo.png"
+                alt="japa 108"
+                width={144}
+                height={38}
+                priority
+                className="h-8 sm:h-9 w-auto"
+              />
             </Link>
-            <div className="hidden sm:flex gap-5 text-sm text-[color:var(--fg-soft)]">
-              <Link href="/library" className="hover:text-[color:var(--accent)] transition-colors">Library</Link>
-              <Link href="/counter" className="hover:text-[color:var(--accent)] transition-colors">Counter</Link>
-              <Link href="/settings" className="hover:text-[color:var(--accent)] transition-colors">Settings</Link>
+            <div className="hidden sm:flex gap-6 text-[13px] font-medium text-[color:var(--fg)] uppercase tracking-wider">
+              <Link href="/library" className="hover:text-[color:var(--accent-warm)] transition-colors">Library</Link>
+              <Link href="/counter" className="hover:text-[color:var(--accent-warm)] transition-colors">Counter</Link>
+              <Link href="/settings" className="hover:text-[color:var(--accent-warm)] transition-colors">Settings</Link>
             </div>
           </nav>
         </header>
@@ -90,9 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           className="border-t border-[color:var(--border)] py-5 text-center text-[11px] text-[color:var(--fg-soft)] hidden sm:block"
           style={{ paddingBottom: "max(1.25rem, var(--safe-bottom))" }}
         >
-          <div className="mala-divider mb-3 max-w-xs mx-auto">
-            <span className="text-[color:var(--accent-soft)]">◆</span>
-          </div>
+          <hr className="hr-gold mb-3 max-w-xs mx-auto" />
           <p>
             Texts from{" "}
             <a className="underline" href="https://vignanam.org" target="_blank" rel="noopener">vignanam.org</a>
