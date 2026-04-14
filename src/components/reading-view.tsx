@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import type { Chant, Verse, WordMeaning } from "@/lib/db";
+import type { Chant, Verse, WordEntry } from "@/lib/db";
 import { TappableVerseLine } from "@/components/word-popover";
+import { WordMeaningPanel } from "@/components/word-meaning-panel";
 
 type SecondaryScript = "hindi" | "tamil" | "none";
 
@@ -14,29 +15,7 @@ const SCRIPT_LABELS: { key: SecondaryScript; label: string }[] = [
   { key: "tamil", label: "தமிழ்" },
 ];
 
-function VerseLines({
-  text,
-  className,
-  words,
-  tappable,
-}: {
-  text: string;
-  className?: string;
-  words?: WordMeaning[];
-  tappable?: boolean;
-}) {
-  return (
-    <div className={className}>
-      {text.split("\n").map((line, i) =>
-        tappable && words && words.length > 0 ? (
-          <TappableVerseLine key={i} line={line} words={words} className="block" />
-        ) : (
-          <div key={i}>{line}</div>
-        )
-      )}
-    </div>
-  );
-}
+type SelectedWord = { wordIndex: number; entry: WordEntry } | null;
 
 export function ReadingView({
   chant,
@@ -45,10 +24,14 @@ export function ReadingView({
 }: {
   chant: Chant;
   verses: Verse[];
-  wordMeanings: WordMeaning[];
+  wordMeanings: WordEntry[];
 }) {
   const [secondaryScript, setSecondaryScript] = useState<SecondaryScript>("none");
   const [openIds, setOpenIds] = useState<Set<number>>(() => new Set());
+  // One selected word per verse (a map so tapping a word in verse 3 doesn't close verse 1's selection)
+  const [selectedByVerse, setSelectedByVerse] = useState<Map<number, SelectedWord>>(
+    () => new Map()
+  );
 
   const toggleMeaning = (id: number) =>
     setOpenIds((prev) => {
@@ -60,6 +43,23 @@ export function ReadingView({
 
   const allOpen = openIds.size === verses.length;
   const toggleAll = () => setOpenIds(allOpen ? new Set() : new Set(verses.map((v) => v.id)));
+
+  const setSelectedWord = (verseId: number, entry: WordEntry | null, wordIndex: number) => {
+    setSelectedByVerse((prev) => {
+      const next = new Map(prev);
+      if (!entry) {
+        next.delete(verseId);
+      } else {
+        const current = next.get(verseId);
+        if (current && current.wordIndex === wordIndex && current.entry === entry) {
+          next.delete(verseId);
+        } else {
+          next.set(verseId, { wordIndex, entry });
+        }
+      }
+      return next;
+    });
+  };
 
   const hasAnyMeaning = verses.some((v) => v.meaning);
   const hasWords = wordMeanings.length > 0;
@@ -110,6 +110,7 @@ export function ReadingView({
               : secondaryScript === "tamil"
                 ? v.tamil
                 : null;
+          const selected = selectedByVerse.get(v.id) ?? null;
           return (
             <li
               key={v.id}
@@ -121,12 +122,20 @@ export function ReadingView({
                 </div>
 
                 {v.sanskrit ? (
-                  <VerseLines
-                    text={v.sanskrit}
-                    className="devanagari text-[1.5rem] sm:text-[1.75rem] md:text-[1.875rem] text-[color:var(--fg)] leading-[1.85] break-words text-center"
-                    words={wordMeanings}
-                    tappable={hasWords}
-                  />
+                  <div className="devanagari text-[1.5rem] sm:text-[1.75rem] md:text-[1.875rem] text-[color:var(--fg)] leading-[1.85] break-words text-center">
+                    {v.sanskrit.split("\n").map((line, i) => (
+                      <TappableVerseLine
+                        key={i}
+                        line={line}
+                        words={wordMeanings}
+                        activeWordIndex={null}
+                        onWordClick={(entry, wordIndex) =>
+                          setSelectedWord(v.id, entry, wordIndex)
+                        }
+                        className="block"
+                      />
+                    ))}
+                  </div>
                 ) : (
                   <span className="text-sm text-[color:var(--fg-soft)]">(no Sanskrit text)</span>
                 )}
@@ -136,12 +145,20 @@ export function ReadingView({
                     <div className="mala-divider my-4">
                       <span className="text-xs">◆</span>
                     </div>
-                    <VerseLines
-                      text={v.transliteration}
-                      className="iast text-[1rem] sm:text-[1.0625rem] text-[color:var(--fg-soft)] leading-[1.7] break-words text-center"
-                      words={wordMeanings}
-                      tappable={hasWords}
-                    />
+                    <div className="iast text-[1rem] sm:text-[1.0625rem] text-[color:var(--fg-soft)] leading-[1.7] break-words text-center">
+                      {v.transliteration.split("\n").map((line, i) => (
+                        <TappableVerseLine
+                          key={i}
+                          line={line}
+                          words={wordMeanings}
+                          activeWordIndex={null}
+                          onWordClick={(entry, wordIndex) =>
+                            setSelectedWord(v.id, entry, wordIndex)
+                          }
+                          className="block"
+                        />
+                      ))}
+                    </div>
                   </>
                 )}
 
@@ -150,14 +167,27 @@ export function ReadingView({
                     <div className="mala-divider my-4">
                       <span className="text-[10px]">◆</span>
                     </div>
-                    <VerseLines
-                      text={secondary}
+                    <div
                       className={`${
                         secondaryScript === "tamil" ? "tamil" : "devanagari"
                       } text-[1.25rem] sm:text-[1.375rem] text-[color:var(--fg-soft)] leading-[1.8] break-words text-center`}
-                    />
+                    >
+                      {secondary.split("\n").map((line, i) => (
+                        <div key={i}>{line}</div>
+                      ))}
+                    </div>
                   </>
                 )}
+
+                {/* Word meaning panel — expands inline when a word is tapped */}
+                <WordMeaningPanel
+                  entry={selected?.entry ?? null}
+                  wordIndex={selected?.wordIndex ?? 0}
+                  sanskritLine={v.sanskrit}
+                  tamilLine={v.tamil}
+                  transliterationLine={v.transliteration}
+                  onClose={() => setSelectedWord(v.id, null, 0)}
+                />
 
                 <div className="mt-5 flex justify-end">
                   <button
@@ -166,7 +196,7 @@ export function ReadingView({
                     className="text-[10px] uppercase tracking-[0.15em] font-semibold text-[color:var(--accent)] hover:text-[color:var(--maroon)] transition-colors"
                     aria-expanded={isOpen}
                   >
-                    meaning {isOpen ? "−" : "+"}
+                    verse meaning {isOpen ? "−" : "+"}
                   </button>
                 </div>
               </div>

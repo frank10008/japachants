@@ -52,6 +52,17 @@ export type WordMeaning = {
   breakdown: { devanagari: string; iast: string; meaning: string }[];
 };
 
+/** Shape used by the reading view: a word with one or more known glosses. */
+export type WordEntry = {
+  word_devanagari: string;
+  iast_variants: string[];
+  glosses: {
+    gloss: string;
+    source: string;
+    breakdown: { devanagari: string; iast: string; meaning: string }[];
+  }[];
+};
+
 export type ChantLink = {
   source: string;
   url: string;
@@ -82,6 +93,13 @@ function tableExists(name: string): boolean {
   }
 }
 
+function normalizeWord(s: string): string {
+  return s
+    .replace(/[\u0964\u0965।॥0-9०-९\s·,.:;!?\-–—"'()[\]{}|]+/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 export function getWordMeanings(chantId: number): WordMeaning[] {
   if (!tableExists("word_meanings")) return [];
   const rows = db()
@@ -99,11 +117,115 @@ export function getWordMeanings(chantId: number): WordMeaning[] {
   }));
 }
 
+/**
+ * Return word meanings for a chant, merging both the chant-local word_meanings
+ * AND global_words entries that match any Devanagari word in this chant's
+ * verses. Falls back silently if global_words doesn't exist.
+ */
+export function getWordMeaningsForChant(chantId: number, verses: Verse[]): WordEntry[] {
+  const entries = new Map<string, WordEntry>();
+
+  // Step 1: chant-local words (higher priority — cited by position/context)
+  const local = getWordMeanings(chantId);
+  for (const w of local) {
+    if (!w.word_devanagari || !w.gloss) continue;
+    const norm = normalizeWord(w.word_devanagari);
+    if (!norm) continue;
+    const existing = entries.get(norm);
+    if (existing) {
+      if (w.word_iast && !existing.iast_variants.includes(w.word_iast)) {
+        existing.iast_variants.push(w.word_iast);
+      }
+      if (!existing.glosses.some((g) => g.gloss.toLowerCase() === w.gloss!.toLowerCase())) {
+        existing.glosses.push({ gloss: w.gloss, source: "", breakdown: w.breakdown || [] });
+      }
+    } else {
+      entries.set(norm, {
+        word_devanagari: w.word_devanagari,
+        iast_variants: w.word_iast ? [w.word_iast] : [],
+        glosses: [{ gloss: w.gloss, source: "", breakdown: w.breakdown || [] }],
+      });
+    }
+    // Also register any sub-words from breakdown as first-class entries
+    for (const b of w.breakdown || []) {
+      if (!b.devanagari || !b.meaning) continue;
+      const subNorm = normalizeWord(b.devanagari);
+      if (!subNorm || entries.has(subNorm)) continue;
+      entries.set(subNorm, {
+        word_devanagari: b.devanagari,
+        iast_variants: b.iast ? [b.iast] : [],
+        glosses: [{ gloss: b.meaning, source: "", breakdown: [] }],
+      });
+    }
+  }
+
+  // Step 2: collect unique Devanagari words appearing in this chant's verses
+  const versesWords = new Set<string>();
+  for (const v of verses) {
+    const line = v.sanskrit || "";
+    for (const tok of line.split(/[\s\u0964\u0965।॥\n]+/)) {
+      const norm = normalizeWord(tok);
+      if (norm) versesWords.add(norm);
+    }
+  }
+
+  // Step 3: look up each unique word in global_words, merging any new glosses
+  if (tableExists("global_words") && versesWords.size > 0) {
+    const placeholders = [...versesWords].map(() => "?").join(",");
+    const rows = db()
+      .prepare(
+        `SELECT norm_word, word_devanagari, iast_variants, glosses
+         FROM global_words
+         WHERE norm_word IN (${placeholders})`
+      )
+      .all(...versesWords) as {
+      norm_word: string;
+      word_devanagari: string;
+      iast_variants: string;
+      glosses: string;
+    }[];
+    for (const r of rows) {
+      let iastArr: string[] = [];
+      let glossArr: WordEntry["glosses"] = [];
+      try {
+        iastArr = JSON.parse(r.iast_variants);
+      } catch {}
+      try {
+        glossArr = JSON.parse(r.glosses);
+      } catch {}
+      const existing = entries.get(r.norm_word);
+      if (existing) {
+        for (const ia of iastArr) {
+          if (!existing.iast_variants.includes(ia)) existing.iast_variants.push(ia);
+        }
+        for (const g of glossArr) {
+          if (!existing.glosses.some((ex) => ex.gloss.toLowerCase() === g.gloss.toLowerCase())) {
+            existing.glosses.push(g);
+          }
+        }
+      } else {
+        entries.set(r.norm_word, {
+          word_devanagari: r.word_devanagari,
+          iast_variants: iastArr,
+          glosses: glossArr,
+        });
+      }
+    }
+  }
+
+  return [...entries.values()];
+}
+
 export function getChantLinks(chantId: number): ChantLink[] {
   if (!tableExists("chant_links")) return [];
   return db()
     .prepare("SELECT source, url FROM chant_links WHERE chant_id = ?")
     .all(chantId) as ChantLink[];
+}
+
+export function globalWordCount(): number {
+  if (!tableExists("global_words")) return 0;
+  return (db().prepare("SELECT COUNT(*) as n FROM global_words").get() as { n: number }).n;
 }
 
 export function listDeities(): { deity: string; count: number }[] {

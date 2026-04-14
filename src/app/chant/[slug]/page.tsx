@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getChantBySlug, getVerses, listChants, getWordMeanings, getChantLinks } from "@/lib/db";
+import { getChantBySlug, getVerses, listChants, getWordMeaningsForChant } from "@/lib/db";
 import { ReadingView } from "@/components/reading-view";
 import { ChantExternalLinks } from "@/components/chant-external-links";
 
@@ -28,8 +28,7 @@ export default async function ChantPage({ params }: Props) {
   const chant = getChantBySlug(slug);
   if (!chant) notFound();
   const verses = getVerses(chant.id);
-  const wordMeanings = getWordMeanings(chant.id);
-  const links = getChantLinks(chant.id);
+  const wordMeanings = getWordMeaningsForChant(chant.id, verses);
 
   return (
     <article className="space-y-6">
@@ -53,7 +52,7 @@ export default async function ChantPage({ params }: Props) {
         </div>
       </header>
 
-      <ChantExternalLinks title={chant.title} deity={chant.deity ?? undefined} links={links} />
+      <ChantExternalLinks title={chant.title} deity={chant.deity ?? undefined} />
 
       <ReadingView chant={chant} verses={verses} wordMeanings={wordMeanings} />
 
@@ -65,12 +64,6 @@ export default async function ChantPage({ params }: Props) {
           </a>
         ) : (
           "vignanam.org"
-        )}
-        {wordMeanings.length > 0 && (
-          <>
-            {" · "}
-            word meanings from <a href="https://greenmesg.org" target="_blank" rel="noopener" className="underline">greenmesg.org</a>
-          </>
         )}
       </p>
     </article>

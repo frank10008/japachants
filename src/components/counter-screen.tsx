@@ -139,13 +139,13 @@ export function CounterScreen() {
                   cx={x}
                   cy={y}
                   r={6}
-                  fill={count >= BEAD_COUNT ? "var(--accent-warm)" : "var(--maroon)"}
+                  fill={count >= BEAD_COUNT ? "var(--accent)" : "var(--maroon)"}
                   className="transition-all duration-300"
                   style={
                     count >= BEAD_COUNT
                       ? {
                           filter:
-                            "drop-shadow(0 0 6px var(--accent-warm)) drop-shadow(0 0 2px var(--accent-warm))",
+                            "drop-shadow(0 0 6px var(--accent)) drop-shadow(0 0 2px var(--accent))",
                         }
                       : undefined
                   }
@@ -158,7 +158,7 @@ export function CounterScreen() {
                 cx={x}
                 cy={y}
                 r={lit ? 4 : 3.5}
-                fill={lit ? "var(--accent-warm)" : "var(--bead-unlit)"}
+                fill={lit ? "var(--accent)" : "var(--bead-unlit)"}
                 className="transition-all duration-200"
                 style={
                   lit
@@ -183,19 +183,20 @@ export function CounterScreen() {
           whileTap={{ scale: 0.95 }}
           whileHover={{ scale: 1.01 }}
           transition={{ type: "tween", duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
-          className="absolute inset-8 rounded-full flex flex-col items-center justify-center text-[color:var(--cream)] touch-none"
+          className="absolute inset-8 rounded-full flex flex-col items-center justify-center text-white touch-none"
           style={{
+            // japa108 CTA gradient, radialized for the circular button
             background:
-              "radial-gradient(circle at 42% 36%, #e88c40 0%, #b84818 35%, #7a1c1c 70%, #3d0a0a 100%)",
+              "radial-gradient(circle at 40% 34%, #fbca08 0%, #cb9418 30%, #ba791a 65%, #7c592c 100%)",
             boxShadow:
-              "inset 0 1px 0 rgba(255,255,255,0.18), inset 0 -12px 28px rgba(0,0,0,0.25), var(--counter-shadow)",
-            outline: "1.5px solid rgba(232, 162, 60, 0.3)",
+              "inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -10px 24px rgba(0,0,0,0.18), var(--counter-shadow)",
+            outline: "1.5px solid rgba(251, 202, 8, 0.35)",
             outlineOffset: "-1px",
           }}
           aria-label="Tap to count. Long press to decrement. Double-tap number to reset."
         >
           <div
-            className="counter-num text-[clamp(4.5rem,18vw,7rem)] text-[color:var(--cream)]"
+            className="counter-num text-[clamp(4.5rem,18vw,7rem)] text-white"
             style={{ fontVariantNumeric: "lining-nums tabular-nums" }}
             onClick={(e) => {
               e.stopPropagation();
@@ -227,7 +228,7 @@ export function CounterScreen() {
       {/* Session stats */}
       <div className="mt-5 grid grid-cols-3 text-center w-full max-w-md divide-x divide-[color:var(--border)]">
         <div className="px-2">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--accent-warm)] opacity-75">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--fg-soft)] opacity-80">
             mantras
           </div>
           <div
@@ -238,7 +239,7 @@ export function CounterScreen() {
           </div>
         </div>
         <div className="px-2">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--accent-warm)] opacity-75">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--fg-soft)] opacity-80">
             elapsed
           </div>
           <div
@@ -249,7 +250,7 @@ export function CounterScreen() {
           </div>
         </div>
         <div className="px-2">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--accent-warm)] opacity-75">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-[color:var(--fg-soft)] opacity-80">
             per min
           </div>
           <div
