@@ -93,11 +93,26 @@ function tableExists(name: string): boolean {
   }
 }
 
-function normalizeWord(s: string): string {
+function normalizeDev(s: string): string {
   return s
-    .replace(/[\u0964\u0965।॥0-9०-९\s·,.:;!?\-–—"'()[\]{}|]+/g, "")
-    .trim()
-    .toLowerCase();
+    .replace(/[\u0951\u0952\u0953\u0954\u1CD0-\u1CE8\u0964\u0965।॥0-9०-९\s·,.:;!?\-–—"'()[\]{}|]+/g, "")
+    .trim();
+}
+function normalizeIast(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[\u0300-\u036F]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z]+/g, "")
+    .replace(/(.)\1+/g, "$1");
+}
+function normalizeToken(s: string): string {
+  if (/[\u0900-\u097F]/.test(s)) return normalizeDev(s);
+  return normalizeIast(s);
+}
+/** Kept for back-compat with per-chant word_meanings lookup */
+function normalizeWord(s: string): string {
+  return normalizeDev(s);
 }
 
 export function getWordMeanings(chantId: number): WordMeaning[] {
@@ -159,56 +174,73 @@ export function getWordMeaningsForChant(chantId: number, verses: Verse[]): WordE
     }
   }
 
-  // Step 2: collect unique Devanagari words appearing in this chant's verses
-  const versesWords = new Set<string>();
+  // Step 2: collect unique lookup keys from BOTH Sanskrit and transliteration
+  // lines. Sanskrit words get a Devanagari key; transliteration words get an
+  // aggressive IAST key (diacritics stripped, doubled letters collapsed).
+  const versesKeys = new Set<string>();
   for (const v of verses) {
-    const line = v.sanskrit || "";
-    for (const tok of line.split(/[\s\u0964\u0965।॥\n]+/)) {
-      const norm = normalizeWord(tok);
-      if (norm) versesWords.add(norm);
-    }
+    const pushFrom = (text: string | null | undefined) => {
+      if (!text) return;
+      for (const tok of text.split(/[\s\u0964\u0965।॥\n]+/)) {
+        const norm = normalizeToken(tok);
+        if (norm) versesKeys.add(norm);
+      }
+    };
+    pushFrom(v.sanskrit);
+    pushFrom(v.transliteration);
   }
 
-  // Step 3: look up each unique word in global_words, merging any new glosses
-  if (tableExists("global_words") && versesWords.size > 0) {
-    const placeholders = [...versesWords].map(() => "?").join(",");
-    const rows = db()
-      .prepare(
-        `SELECT norm_word, word_devanagari, iast_variants, glosses
-         FROM global_words
-         WHERE norm_word IN (${placeholders})`
-      )
-      .all(...versesWords) as {
-      norm_word: string;
-      word_devanagari: string;
-      iast_variants: string;
-      glosses: string;
-    }[];
-    for (const r of rows) {
-      let iastArr: string[] = [];
-      let glossArr: WordEntry["glosses"] = [];
-      try {
-        iastArr = JSON.parse(r.iast_variants);
-      } catch {}
-      try {
-        glossArr = JSON.parse(r.glosses);
-      } catch {}
-      const existing = entries.get(r.norm_word);
-      if (existing) {
-        for (const ia of iastArr) {
-          if (!existing.iast_variants.includes(ia)) existing.iast_variants.push(ia);
-        }
-        for (const g of glossArr) {
-          if (!existing.glosses.some((ex) => ex.gloss.toLowerCase() === g.gloss.toLowerCase())) {
-            existing.glosses.push(g);
+  // Step 3: one SQL to fetch all matching global_words rows
+  if (tableExists("global_words") && versesKeys.size > 0) {
+    const keys = [...versesKeys];
+    const BATCH = 900; // stay under SQLite's default max variables
+    for (let i = 0; i < keys.length; i += BATCH) {
+      const batch = keys.slice(i, i + BATCH);
+      const placeholders = batch.map(() => "?").join(",");
+      const rows = db()
+        .prepare(
+          `SELECT norm_key, word_devanagari, iast_variants, glosses
+           FROM global_words
+           WHERE norm_key IN (${placeholders})`
+        )
+        .all(...batch) as {
+        norm_key: string;
+        word_devanagari: string;
+        iast_variants: string;
+        glosses: string;
+      }[];
+      for (const r of rows) {
+        let iastArr: string[] = [];
+        let glossArr: WordEntry["glosses"] = [];
+        try {
+          iastArr = JSON.parse(r.iast_variants);
+        } catch {}
+        try {
+          glossArr = JSON.parse(r.glosses);
+        } catch {}
+        // Dedup by Devanagari form (primary identity)
+        const dedupKey = r.word_devanagari || r.norm_key;
+        const existing = entries.get(dedupKey);
+        if (existing) {
+          for (const ia of iastArr) {
+            if (!existing.iast_variants.includes(ia)) existing.iast_variants.push(ia);
           }
+          for (const g of glossArr) {
+            if (
+              !existing.glosses.some(
+                (ex) => ex.gloss.toLowerCase() === g.gloss.toLowerCase()
+              )
+            ) {
+              existing.glosses.push(g);
+            }
+          }
+        } else {
+          entries.set(dedupKey, {
+            word_devanagari: r.word_devanagari,
+            iast_variants: iastArr,
+            glosses: glossArr,
+          });
         }
-      } else {
-        entries.set(r.norm_word, {
-          word_devanagari: r.word_devanagari,
-          iast_variants: iastArr,
-          glosses: glossArr,
-        });
       }
     }
   }

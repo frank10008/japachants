@@ -48,7 +48,9 @@
 }
 
 :root {
-  color-scheme: light;
+  /* Locked to light mode everywhere — japa108 has no dark mode and the user
+     wants the cream/gold palette even in phone night mode. */
+  color-scheme: light only;
   /* japa108 palette — hex values extracted from japa108.com/css/main.css */
   --bg: #fff3e7;            /* japa108 #bg1 page background */
   --surface: #ffffff;       /* japa108 uses pure white for cards/panels */
@@ -75,25 +77,9 @@
   --ease-breath: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    /* japa108 spirit applied to dark — gold holds on the dark warm almost-black */
-    --bg: #1a1200;
-    --surface: #2a1f00;
-    --fg: #f0e8c8;
-    --fg-soft: #b8895e;
-    --accent: #fbca08;
-    --accent-warm: #cf6300;
-    --accent-soft: #cb9418;
-    --border: rgba(240, 232, 200, 0.10);
-    --maroon: #ba791a;
-    --maroon-deep: #7c592c;
-    --bead-unlit: rgba(240, 232, 200, 0.12);
-    --bead-glow: rgba(251, 202, 8, 0.6);
-    --card-shadow: 0 10px 18px rgba(0, 0, 0, 0.4);
-  }
-}
+/* No dark mode — we stay on the japa108 cream/gold palette regardless of
+   the user's OS preference. The `color-scheme: light only` above prevents
+   iOS from auto-darkening inputs. */
 
 html, body {
   height: 100%;

@@ -44,15 +44,25 @@ const DEFAULT_SETTINGS: Settings = {
   keepAwake: false,
 };
 
-function vibrate(ms: number, enabled: boolean) {
+function vibrate(pattern: number | number[], enabled: boolean) {
   if (!enabled) return;
-  if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+  if (typeof window === "undefined") return;
+  const nav = window.navigator as Navigator & { vibrate?: (p: number | number[]) => boolean };
+  if (typeof nav.vibrate === "function") {
     try {
-      navigator.vibrate(ms);
+      nav.vibrate(pattern);
     } catch {
-      // ignore
+      /* swallow — some platforms throw on rapid repeat */
     }
   }
+}
+
+/** iOS Safari doesn't expose navigator.vibrate at all. Everything Android
+ *  and desktop Chrome/Firefox does. Used by the settings screen to explain
+ *  why the toggle may do nothing on iPhone. */
+export function hapticsSupported(): boolean {
+  if (typeof window === "undefined") return false;
+  return typeof (window.navigator as Navigator & { vibrate?: unknown }).vibrate === "function";
 }
 
 export const useCounterStore = create<CounterState>()(
@@ -66,7 +76,7 @@ export const useCounterStore = create<CounterState>()(
 
       inc: () => {
         const s = get();
-        vibrate(10, s.settings.haptics);
+        vibrate(30, s.settings.haptics);
         set({
           count: s.count + 1,
           startedAt: s.startedAt ?? Date.now(),
@@ -74,7 +84,7 @@ export const useCounterStore = create<CounterState>()(
       },
       dec: () => {
         const s = get();
-        vibrate(6, s.settings.haptics);
+        vibrate([15, 40, 15], s.settings.haptics);
         set({ count: Math.max(0, s.count - 1) });
       },
       reset: () => set({ count: 0, startedAt: null }),
@@ -106,7 +116,27 @@ export const useCounterStore = create<CounterState>()(
     }),
     {
       name: "japa-counter",
-      version: 1,
+      version: 2,
+      migrate: (persisted: unknown) => {
+        const p = (persisted ?? {}) as Partial<CounterState>;
+        const current = (p.settings ?? {}) as Partial<Settings>;
+        return {
+          ...p,
+          settings: { ...DEFAULT_SETTINGS, ...current },
+        } as CounterState;
+      },
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<CounterState>;
+        return {
+          ...current,
+          ...p,
+          settings: {
+            ...DEFAULT_SETTINGS,
+            ...(current.settings ?? {}),
+            ...(p.settings ?? {}),
+          },
+        };
+      },
     }
   )
 );

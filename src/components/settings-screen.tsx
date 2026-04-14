@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCounterStore } from "@/lib/counter-store";
+import { useCounterStore, hapticsSupported } from "@/lib/counter-store";
 
 const TARGETS = [27, 54, 108, 216, 1008];
 const SCRIPTS = [
@@ -123,7 +123,7 @@ export function SettingsScreen() {
           <span className="text-sm">Vibrate on tap</span>
           <span
             className={`w-11 h-6 rounded-full relative transition-colors ${
-              settings.haptics ? "bg-[color:var(--accent)]" : "bg-[color:var(--border)]"
+              settings.haptics ? "bg-[color:var(--accent-warm)]" : "bg-[color:var(--border)]"
             }`}
           >
             <span
@@ -133,6 +133,13 @@ export function SettingsScreen() {
             />
           </span>
         </button>
+        {!hapticsSupported() && (
+          <p className="text-[11px] text-[color:var(--fg-soft)] italic px-1 leading-relaxed">
+            Your browser doesn&apos;t expose the Vibration API. On iPhone, Safari
+            doesn&apos;t support web-based haptics — the toggle stays on for
+            when you open the app on Android, where it will vibrate.
+          </p>
+        )}
       </section>
 
       <section className="space-y-3">
