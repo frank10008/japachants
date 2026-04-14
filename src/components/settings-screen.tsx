@@ -5,7 +5,6 @@ import { useCounterStore, hapticsSupported } from "@/lib/counter-store";
 
 const TARGETS = [27, 54, 108, 216, 1008];
 const SCRIPTS = [
-  { value: "sanskrit", label: "Sanskrit (Devanagari)" },
   { value: "hindi", label: "Hindi (Devanagari)" },
   { value: "tamil", label: "Tamil" },
   { value: "transliteration", label: "Transliteration (IAST)" },
