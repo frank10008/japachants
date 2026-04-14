@@ -39,9 +39,10 @@
 
   --font-devanagari: var(--font-noto-devanagari), "Noto Serif Devanagari", serif;
   --font-tamil: var(--font-noto-tamil), "Noto Serif Tamil", serif;
-  /* japa108 uses Helvetica Neue for everything UI — body, headings, counter */
+  /* japa108 uses Helvetica Neue for everything UI. We also use it for IAST
+     transliteration so the entire UI chrome is one consistent sans-serif. */
   --font-display: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-iast: Georgia, "Times New Roman", serif; /* japa108 uses Georgia for italics/blockquotes */
+  --font-iast: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-counter: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -130,8 +131,10 @@ body {
 }
 .iast {
   font-family: var(--font-iast);
-  font-style: italic;
-  line-height: 1.7;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: 0;
   font-size: calc(1em * var(--font-scale));
 }
 .scripted-translation { font-size: calc(1em * var(--font-scale)); }
