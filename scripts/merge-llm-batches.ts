@@ -39,7 +39,7 @@ function main() {
 
   const files = fs
     .readdirSync(BATCH_DIR)
-    .filter((n) => /^(batch|haiku|sonnet)-\d+-out\.json$/.test(n))
+    .filter((n) => /^(batch|haiku|sonnet|final)-\d+-out\.json$/.test(n))
     .sort();
 
   if (files.length === 0) {
